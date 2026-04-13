@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Relationship Management</title>
+    <link rel="stylesheet" href="CSS/login.css">
+    <link rel="stylesheet" href="CSS/headerFooter.css">
+    <link rel="icon" type="image/x-icon" href="imagens/favicon1.png">
+</head>
+    
+<body>
+
+    <header>
+        <div id="header"></div>
+    </header>
+    
+
+    <main>
+        <section>
+
+            <div class="login-container" style="max-width: 500px;"> <h2>Registo</h2>
+    
+                <form id="registerForm" class="custom-form">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="regPrimeiroNome">Primeiro nome:</label>
+                            <input type="text" id="regPrimeiroNome" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="regUltimoNome">Último nome:</label>
+                            <input type="text" id="regUltimoNome" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="regFotoUrl">Foto URL:</label>
+                        <input type="url" id="regFotoUrl" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="regEmail">Email:</label>
+                            <input type="email" id="regEmail" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="regTelefone">Telefone:</label>
+                            <input type="text" id="regTelefone" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="regUsername">Username:</label>
+                        <input type="text" id="regUsername" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="regPassword">Password:</label>
+                        <input type="password" id="regPassword" required>
+                    </div>
+
+                    <div class="form-actions">
+                        <button class="btn" type="submit">Registar</button>
+                        <button class="btn btn-secondary" type="button" onclick="window.location.href='login.html'">Voltar</button>
+                    </div>
+
+                </form>
+            </div>
+        </section>       
+
+    </main>
+
+
+    <footer>
+        <div id="footer"></div>
+    </footer>
+
+    <script src="JavaScript/aplicacao.js" defer></script>
+
+</body>
+</html>
