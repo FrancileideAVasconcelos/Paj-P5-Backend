@@ -7,6 +7,7 @@ import jakarta.ws.rs.NotFoundException;
 import pt.uc.dei.proj5.dao.ClienteDao;
 import pt.uc.dei.proj5.dao.LeadDao;
 import pt.uc.dei.proj5.dao.UserDao;
+import pt.uc.dei.proj5.dao.VerificationTokenDao;
 import pt.uc.dei.proj5.dto.ClientDto;
 import pt.uc.dei.proj5.dto.LeadDto;
 import pt.uc.dei.proj5.entity.ClienteEntity;
@@ -39,6 +40,50 @@ public class AdminBean implements Serializable {
 
     @Inject
     LeadBean leadBean;
+
+    @Inject
+    EmailBean emailBean;
+
+    @Inject
+    VerificationTokenDao verificationTokenDao;
+
+    public void inviteUser(String email) throws Exception {
+        if (userDao.getUserByEmail(email) != null) {
+            throw new Exception("Já existe um utilizador com este e-mail no sistema.");
+        }
+
+        // 1. Cria o utilizador fantasma com dados provisórios
+        UserDto dummyUser = new UserDto();
+        dummyUser.setEmail(email);
+        dummyUser.setUsername("temp_" + java.util.UUID.randomUUID().toString().substring(0,8));
+        dummyUser.setPassword("pendente");
+        dummyUser.setPrimeiroNome("Pendente");
+        dummyUser.setUltimoNome("Pendente");
+        dummyUser.setTelefone("000000000");
+        dummyUser.setFotoUrl("");
+
+        userDao.novoUserDB(dummyUser); // Vai nascer inativo devido à alteração anterior no DAO
+
+        UserEntity guardado = userDao.checkUsername(dummyUser.getUsername());
+
+        // 2. Gera o Token de Registo
+        String tokenConfirmacao = TokenBean.generateToken();
+        pt.uc.dei.proj5.entity.VerificationToken vToken = new pt.uc.dei.proj5.entity.VerificationToken();
+        vToken.setToken(tokenConfirmacao);
+        vToken.setUser(guardado);
+        vToken.setTipo("REGISTRATION"); // Tipo específico para registo
+        vToken.setExpiryDate(java.time.LocalDateTime.now().plusHours(48)); // Expira em 48h
+        verificationTokenDao.persist(vToken);
+
+        // 3. Envia o E-mail usando o MailHog
+        String subject = "Convite para a Plataforma CRM";
+        String body = "Bem-vindo!\n\nFoi convidado pelo administrador para se juntar ao CRM.\n\n" +
+                "Por favor, complete o seu registo e crie a sua conta clicando no link abaixo:\n" +
+                "http://localhost:5173/complete-registration?token=" + tokenConfirmacao + "\n\n" +
+                "Este link expira em 48 horas.";
+
+        emailBean.sendEmail(email, subject, body);
+    }
 
     // Devolve a lista de todos os utilizadores em formato DTO
     public List<UserDto> getAllUsers() {

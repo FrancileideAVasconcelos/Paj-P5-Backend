@@ -79,10 +79,10 @@ public class UserDao extends DefaultDao<UserEntity> implements Serializable {
 
     public UserEntity getUserByEmail(String email) {
         try {
-            return em.createQuery("SELECT u FROM UserEntity u WHERE u.email = :email", UserEntity.class)
+            return em.createQuery("SELECT u FROM UserEntity u WHERE LOWER(u.email) = LOWER(:email)", UserEntity.class)
                     .setParameter("email", email)
                     .getSingleResult();
-        } catch (NoResultException e) {
+        } catch (jakarta.persistence.NoResultException e) {
             return null;
         }
     }

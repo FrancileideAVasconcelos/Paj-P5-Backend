@@ -20,6 +20,21 @@ public class AdminService extends BaseService {
     @Inject
     AdminBean adminBean;
 
+    @POST
+    @Path("/users/invite")
+    public Response inviteUser(@HeaderParam("token") String token, UserDto dto) {
+        validarAdmin(token);
+        if (dto.getEmail() == null || dto.getEmail().trim().isEmpty()) {
+            return Response.status(400).entity("O e-mail é obrigatório.").build();
+        }
+
+        try {
+            adminBean.inviteUser(dto.getEmail());
+            return Response.status(200).entity("Convite enviado com sucesso para o e-mail!").build();
+        } catch (Exception e) {
+            return Response.status(400).entity(e.getMessage()).build();
+        }
+    }
 
     @GET
     @Path("/users/{username}")

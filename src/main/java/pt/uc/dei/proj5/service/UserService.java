@@ -52,15 +52,15 @@ public class UserService extends BaseService {
         return Response.status(200).build();
     }
 
-
-    @POST
-    @Path("/register")
-    public Response register(@Valid UserDto newUser) throws Exception {
-
-        userBean.register(newUser);
-
-        return Response.status(Response.Status.CREATED).entity("Utilizador registado com sucesso!").build();
-    }
+//
+//    @POST
+//    @Path("/register")
+//    public Response register(@Valid UserDto newUser) throws Exception {
+//
+//        userBean.register(newUser);
+//
+//        return Response.status(Response.Status.CREATED).entity("Utilizador registado com sucesso!").build();
+//    }
 
     @POST
     @Path("/confirm")
@@ -71,6 +71,18 @@ public class UserService extends BaseService {
 
         String resultado = userBean.confirmAccount(token);
         if (resultado.equals("Conta ativada com sucesso!")) {
+            return Response.ok().entity(resultado).build();
+        }
+        return Response.status(400).entity(resultado).build();
+    }
+
+    @POST
+    @Path("/complete-registration")
+    public Response completeRegistration(@QueryParam("token") String token, UserDto dto) {
+        if (token == null) return Response.status(400).entity("Token não fornecido.").build();
+
+        String resultado = userBean.completeRegistration(token, dto);
+        if (resultado.equals("Registo concluído com sucesso!")) {
             return Response.ok().entity(resultado).build();
         }
         return Response.status(400).entity(resultado).build();

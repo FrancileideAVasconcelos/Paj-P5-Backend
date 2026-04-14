@@ -39,6 +39,34 @@ public class UserBean implements Serializable {
         return tokenLimpo; // Retorna a versão não encriptada para o Frontend/Postman
     }
 
+    // Adiciona este método:
+    public String completeRegistration(String token, UserDto dadosFinais) {
+        pt.uc.dei.proj5.entity.VerificationToken vToken = verificationTokenDao.findByToken(token);
+
+        if (vToken == null || !vToken.getTipo().equals("REGISTRATION")) return "Token inválido ou não encontrado.";
+        if (vToken.getExpiryDate().isBefore(java.time.LocalDateTime.now())) return "O link de convite expirou.";
+
+        // Verifica se o username escolhido já está a ser usado por outra pessoa
+        if (userDao.checkUsername(dadosFinais.getUsername()) != null) {
+            return "O username escolhido já está em uso.";
+        }
+
+        UserEntity user = vToken.getUser();
+
+        // Substitui os dados fantasma pelos dados reais enviados do frontend
+        user.setUsername(dadosFinais.getUsername());
+        user.setPassword(dadosFinais.getPassword());
+        user.setPrimeiroNome(dadosFinais.getPrimeiroNome());
+        user.setUltimoNome(dadosFinais.getUltimoNome());
+        user.setTelefone(dadosFinais.getTelefone());
+        user.setFotoUrl(dadosFinais.getFotoUrl() != null ? dadosFinais.getFotoUrl() : "");
+        user.setIsAtivo(true); // A conta fica finalmente ativa!
+
+        userDao.merge(user);
+        verificationTokenDao.remove(vToken); // Apaga o token para não ser reutilizado
+
+        return "Registo concluído com sucesso!";
+    }
 
     public boolean register(UserDto newUser) {
 
