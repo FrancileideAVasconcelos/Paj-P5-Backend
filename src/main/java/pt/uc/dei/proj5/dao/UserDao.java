@@ -43,12 +43,6 @@ public class UserDao extends DefaultDao<UserEntity> implements Serializable {
         return em.createQuery("SELECT u FROM UserEntity u", UserEntity.class).getResultList();
     }
 
-    public List<LeadEntity> getAllActiveLeads(UserEntity user) {
-        return em.createQuery("SELECT l FROM LeadEntity l WHERE users = :user AND isAtivo = true", LeadEntity.class)
-                .setParameter("user", user)
-                .getResultList();
-    }
-
 
     public void novoUserDB(UserDto novoUser) {
 

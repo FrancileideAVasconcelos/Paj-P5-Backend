@@ -5,8 +5,8 @@ import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import pt.uc.dei.proj5.beans.TokenBean;
 import pt.uc.dei.proj5.beans.UserBean;
+import pt.uc.dei.proj5.dao.MensagemDao;
 import pt.uc.dei.proj5.dao.UserDao;
 import pt.uc.dei.proj5.dto.UserDto;
 import pt.uc.dei.proj5.entity.UserEntity;
@@ -23,10 +23,10 @@ public class UserService extends BaseService {
     UserBean userBean;
 
     @Inject
-    TokenBean tokenBean;
+    UserDao userDao;
 
     @Inject
-    UserDao userDao;
+    MensagemDao mensagemDao;
 
 
     @POST
@@ -55,30 +55,6 @@ public class UserService extends BaseService {
         userBean.logout(token);
         // endpoint e retorna 200 Success
         return Response.status(200).build();
-    }
-
-//
-//    @POST
-//    @Path("/register")
-//    public Response register(@Valid UserDto newUser) throws Exception {
-//
-//        userBean.register(newUser);
-//
-//        return Response.status(Response.Status.CREATED).entity("Utilizador registado com sucesso!").build();
-//    }
-
-    @POST
-    @Path("/confirm")
-    public Response confirmAccount(@QueryParam("token") String token) {
-        System.out.println("Token que chegou ao backend: [" + token + "]");
-
-        if (token == null) return Response.status(400).entity("Token não fornecido.").build();
-
-        String resultado = userBean.confirmAccount(token);
-        if (resultado.equals("Conta ativada com sucesso!")) {
-            return Response.ok().entity(resultado).build();
-        }
-        return Response.status(400).entity(resultado).build();
     }
 
     @POST
@@ -178,18 +154,20 @@ public class UserService extends BaseService {
     @Path("/ativos")
     public Response getActiveUsers(@HeaderParam("token") String token) {
         UserEntity eu = validarAcesso(token);
-
-        // Vai buscar as entidades ao DAO
         List<UserEntity> ativos = userDao.getActiveUsersExcluindo(eu.getUsername());
-
-        // Converte para DTO para não enviar passwords para o Frontend!
         List<UserDto> dtos = new java.util.ArrayList<>();
+
         for (UserEntity u : ativos) {
             UserDto dto = new UserDto();
             dto.setUsername(u.getUsername());
             dto.setPrimeiroNome(u.getPrimeiroNome());
             dto.setUltimoNome(u.getUltimoNome());
             dto.setFotoUrl(u.getFotoUrl());
+
+            // --- NOVO: Pede ao DAO quantas mensagens não lidas tens desta pessoa! ---
+            long unread = mensagemDao.contarNaoLidasDe(u, eu);
+            dto.setUnreadCount(unread);
+
             dtos.add(dto);
         }
 

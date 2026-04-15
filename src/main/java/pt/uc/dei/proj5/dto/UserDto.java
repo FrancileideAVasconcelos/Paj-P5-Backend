@@ -38,6 +38,9 @@ public class UserDto {
     private boolean admin;
     private boolean ativo;
 
+    // Adiciona esta variável
+    private long unreadCount;
+
     @XmlElement
     public String getUsername() {
         return username;
@@ -117,4 +120,8 @@ public class UserDto {
     public void setAtivo(boolean ativo) {
         this.ativo = ativo;
     }
+
+    @XmlElement
+    public long getUnreadCount() { return unreadCount; }
+    public void setUnreadCount(long unreadCount) { this.unreadCount = unreadCount; }
 }

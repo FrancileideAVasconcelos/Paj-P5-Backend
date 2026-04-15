@@ -34,6 +34,15 @@ public class MensagemDao extends DefaultDao<MensagemEntity> implements Serializa
                 .getSingleResult();
     }
 
+    // Conta as mensagens não lidas que vieram de UM remetente específico
+    public long contarNaoLidasDe(UserEntity remetente, UserEntity destinatario) {
+        return em.createQuery(
+                        "SELECT COUNT(m) FROM MensagemEntity m WHERE m.remetente = :remetente AND m.destinatario = :destinatario AND m.lida = false", Long.class)
+                .setParameter("remetente", remetente)
+                .setParameter("destinatario", destinatario)
+                .getSingleResult();
+    }
+
     // Marca as mensagens de uma conversa específica como lidas quando o utilizador abre a janela
     public void marcarComoLidas(UserEntity remetente, UserEntity destinatario) {
         em.createQuery(

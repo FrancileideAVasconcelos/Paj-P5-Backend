@@ -9,6 +9,7 @@ import pt.uc.dei.proj5.dao.UserDao;
 import pt.uc.dei.proj5.dto.MensagemDto;
 import pt.uc.dei.proj5.entity.MensagemEntity;
 import pt.uc.dei.proj5.entity.UserEntity;
+import pt.uc.dei.proj5.websocket.NotificationWebSocketManager;
 import pt.uc.dei.proj5.websocket.WebSocketManager;
 
 import java.util.ArrayList;
@@ -25,6 +26,9 @@ public class ChatBean {
 
     @Inject
     WebSocketManager wsManager;
+
+    @Inject
+    NotificationWebSocketManager notifManager;
 
     // 1. Grava na BD via REST e avisa via WebSocket
     public MensagemDto enviarMensagem(String remetenteUsername, String destinatarioUsername, String conteudo) throws Exception {
@@ -59,10 +63,10 @@ public class ChatBean {
             String jsonWs = "{\"type\": \"NEW_MESSAGE\", \"payload\": " + jsonb.toJson(dto) + "}";
             wsManager.sendMessageToUser(destinatarioUsername, jsonWs);
 
-            // Envia o novo contador de mensagens não lidas
+            // Envia o novo contador de mensagens não lidas VIA WS DE NOTIFICAÇÕES
             long unreadCount = mensagemDao.contarNaoLidas(destinatario);
             String unreadJson = "{\"type\": \"UNREAD_COUNT\", \"count\": " + unreadCount + "}";
-            wsManager.sendMessageToUser(destinatarioUsername, unreadJson);
+            notifManager.sendNotification(destinatarioUsername, unreadJson); // <-- Alterado aqui!
         }
 
         return dto;
@@ -95,10 +99,10 @@ public class ChatBean {
 
         mensagemDao.marcarComoLidas(remetente, leitor);
 
-        // Atualiza imediatamente o "balão" de notificações (badge) do leitor via WebSocket
+        // Atualiza o balão de notificações do leitor VIA WS DE NOTIFICAÇÕES
         long unreadCount = mensagemDao.contarNaoLidas(leitor);
         String unreadJson = "{\"type\": \"UNREAD_COUNT\", \"count\": " + unreadCount + "}";
-        wsManager.sendMessageToUser(leitorUsername, unreadJson);
+        notifManager.sendNotification(leitorUsername, unreadJson); // <-- Alterado aqui!
     }
 
     // 4. Vai buscar apenas o número de notificações ao fazer login inicial

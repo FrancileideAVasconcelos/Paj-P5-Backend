@@ -71,50 +71,6 @@ public class UserBean implements Serializable {
         return "Registo concluído com sucesso!";
     }
 
-    public boolean register(UserDto newUser) {
-
-        if (userDao.checkUsername(newUser.getUsername()) != null) {
-            return false;
-        }
-
-        userDao.novoUserDB(newUser); // Guarda na BD
-        // Vai buscar a entidade acabada de criar
-        UserEntity guardado = userDao.checkUsername(newUser.getUsername());
-
-        // Gera token temporário
-        String tokenConfirmacao = TokenBean.generateToken();
-
-        VerificationToken vToken = new VerificationToken();
-        vToken.setToken(tokenConfirmacao);
-        vToken.setUser(guardado);
-        vToken.setTipo("CONFIRMATION");
-        vToken.setExpiryDate(java.time.LocalDateTime.now().plusHours(24)); // Expira em 24h
-
-        verificationTokenDao.persist(vToken);
-
-        // SIMULAÇÃO DO ENVIO DE E-MAIL NO CONSOLA DO SERVIDOR
-        System.out.println("=====================================================");
-        System.out.println("E-MAIL DE CONFIRMAÇÃO PARA: " + guardado.getEmail());
-        System.out.println("Link: http://localhost:5173/confirm-account?token=" + tokenConfirmacao);
-        System.out.println("=====================================================");
-
-        return true;
-    }
-
-    public String confirmAccount(String token) {
-        VerificationToken vToken = verificationTokenDao.findByToken(token);
-
-        if (vToken == null || !vToken.getTipo().equals("CONFIRMATION")) return "Token inválido ou não encontrado.";
-        if (vToken.getExpiryDate().isBefore(java.time.LocalDateTime.now())) return "O link expirou.";
-
-        UserEntity user = vToken.getUser();
-        user.setIsAtivo(true);
-        userDao.merge(user);
-
-        verificationTokenDao.remove(vToken); // Invalida o token após uso
-        return "Conta ativada com sucesso!";
-    }
-
     public void forgotPassword(String email) throws Exception {
         UserEntity user = userDao.getUserByEmail(email); // Ou o método que uses para buscar por e-mail
         if (user == null || !user.isAtivo()) {
@@ -146,7 +102,7 @@ public class UserBean implements Serializable {
     public String resetPassword(String token, String newPassword) {
         VerificationToken vToken = verificationTokenDao.findByToken(token);
 
-        if (vToken == null || !vToken.getTipo().equals("RESET")) return "Token inválido.";
+        if (vToken == null || !vToken.getTipo().equals("PASSWORD_RESET")) return "Token inválido.";
         if (vToken.getExpiryDate().isBefore(java.time.LocalDateTime.now())) return "O link expirou.";
 
         UserEntity user = vToken.getUser();
@@ -170,11 +126,6 @@ public class UserBean implements Serializable {
         userDao.updateUserDB(user, novosDados);
     }
 
-    public UserDto getUserByToken(String token) {
-        UserEntity entity = tokenDao.getUserByToken(token);
-        if (entity == null) return null;
-        return converterParaDto(entity);
-    }
 
     public boolean verificaPassword(UserEntity user, String password) {
         return user.getPassword().equals(password);
