@@ -7,10 +7,12 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import pt.uc.dei.proj5.beans.TokenBean;
 import pt.uc.dei.proj5.beans.UserBean;
+import pt.uc.dei.proj5.dao.UserDao;
 import pt.uc.dei.proj5.dto.UserDto;
 import pt.uc.dei.proj5.entity.UserEntity;
 
 import java.util.Collections;
+import java.util.List;
 
 @Path("/users")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -22,6 +24,9 @@ public class UserService extends BaseService {
 
     @Inject
     TokenBean tokenBean;
+
+    @Inject
+    UserDao userDao;
 
 
     @POST
@@ -79,6 +84,10 @@ public class UserService extends BaseService {
     @POST
     @Path("/complete-registration")
     public Response completeRegistration(@QueryParam("token") String token, UserDto dto) {
+
+        // --- DETETIVE ---
+        System.out.println("Token que chegou ao completar registo: [" + token + "]");
+
         if (token == null) return Response.status(400).entity("Token não fornecido.").build();
 
         String resultado = userBean.completeRegistration(token, dto);
@@ -90,7 +99,7 @@ public class UserService extends BaseService {
 
     @POST
     @Path("/forgot-password")
-    public Response forgotPassword(UserDto userDto) { // Enviamos o email no body através do Dto
+    public Response forgotPassword(UserDto userDto) throws Exception { // Enviamos o email no body através do Dto
         if (userDto.getEmail() == null) return Response.status(400).entity("Email obrigatório").build();
 
         userBean.forgotPassword(userDto.getEmail());
@@ -163,5 +172,27 @@ public class UserService extends BaseService {
         return Response.status(Response.Status.OK)
                 .entity("Password confirmada com sucesso.")
                 .build();
+    }
+
+    @GET
+    @Path("/ativos")
+    public Response getActiveUsers(@HeaderParam("token") String token) {
+        UserEntity eu = validarAcesso(token);
+
+        // Vai buscar as entidades ao DAO
+        List<UserEntity> ativos = userDao.getActiveUsersExcluindo(eu.getUsername());
+
+        // Converte para DTO para não enviar passwords para o Frontend!
+        List<UserDto> dtos = new java.util.ArrayList<>();
+        for (UserEntity u : ativos) {
+            UserDto dto = new UserDto();
+            dto.setUsername(u.getUsername());
+            dto.setPrimeiroNome(u.getPrimeiroNome());
+            dto.setUltimoNome(u.getUltimoNome());
+            dto.setFotoUrl(u.getFotoUrl());
+            dtos.add(dto);
+        }
+
+        return Response.ok(dtos).build();
     }
 }

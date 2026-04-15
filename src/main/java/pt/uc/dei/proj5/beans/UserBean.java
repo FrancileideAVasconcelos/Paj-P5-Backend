@@ -24,6 +24,9 @@ public class UserBean implements Serializable {
     @Inject
     VerificationTokenDao verificationTokenDao;
 
+    @Inject
+    EmailBean emailBean;
+
 
     public String loginToken(String username, String password) {
 
@@ -112,24 +115,32 @@ public class UserBean implements Serializable {
         return "Conta ativada com sucesso!";
     }
 
-    public boolean forgotPassword(String email) {
-        UserEntity user = userDao.getUserByEmail(email);
-        if (user == null || !user.isAtivo()) return false;
+    public void forgotPassword(String email) throws Exception {
+        UserEntity user = userDao.getUserByEmail(email); // Ou o método que uses para buscar por e-mail
+        if (user == null || !user.isAtivo()) {
+            throw new Exception("Conta não encontrada ou inativa.");
+        }
 
-        String resetToken = TokenBean.generateToken();
-        VerificationToken vToken = new VerificationToken();
-        vToken.setToken(resetToken);
+        // 1. Gera o Token (podes usar a mesma entidade VerificationToken com um tipo diferente)
+        String tokenRecuperacao = TokenBean.generateToken();
+        pt.uc.dei.proj5.entity.VerificationToken vToken = new pt.uc.dei.proj5.entity.VerificationToken();
+        vToken.setToken(tokenRecuperacao);
         vToken.setUser(user);
-        vToken.setTipo("RESET");
-        vToken.setExpiryDate(java.time.LocalDateTime.now().plusHours(1)); // Expira em 1 hora
+        vToken.setTipo("PASSWORD_RESET"); // Tipo para distinguir do Registo
+        vToken.setExpiryDate(java.time.LocalDateTime.now().plusMinutes(30)); // Expira em 30 minutos
+
         verificationTokenDao.persist(vToken);
 
-        System.out.println("=====================================================");
-        System.out.println("E-MAIL DE RECUPERAÇÃO DE PASSWORD PARA: " + email);
-        System.out.println("Link: http://localhost:5173/reset-password?token=" + resetToken);
-        System.out.println("=====================================================");
+        // 2. Cria o texto do e-mail
+        String subject = "Recuperação de Password - Plataforma CRM";
+        String body = "Olá " + user.getPrimeiroNome() + ",\n\n" +
+                "Recebemos um pedido para repor a sua password.\n\n" +
+                "Por favor, clique no link abaixo para criar uma nova password:\n" +
+                "http://localhost:5173/reset-password?token=" + tokenRecuperacao + "\n\n" +
+                "Este link expira em 30 minutos. Se não fez este pedido, pode ignorar este e-mail.";
 
-        return true;
+        // 3. Usa o MailHog para enviar! (Apaga o teu antigo System.out.println)
+        emailBean.sendEmail(email, subject, body);
     }
 
     public String resetPassword(String token, String newPassword) {

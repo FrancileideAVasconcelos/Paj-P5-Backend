@@ -86,4 +86,12 @@ public class UserDao extends DefaultDao<UserEntity> implements Serializable {
             return null;
         }
     }
+
+    // Vai buscar todos os utilizadores ativos, exceto a própria pessoa
+    public List<UserEntity> getActiveUsersExcluindo(String meuUsername) {
+        return em.createQuery(
+                        "SELECT u FROM UserEntity u WHERE u.isAtivo = true AND u.username != :meuUsername", UserEntity.class)
+                .setParameter("meuUsername", meuUsername)
+                .getResultList();
+    }
 }

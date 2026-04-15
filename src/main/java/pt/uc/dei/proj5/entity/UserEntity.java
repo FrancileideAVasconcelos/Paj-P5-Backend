@@ -39,7 +39,7 @@ public class UserEntity implements Serializable {
     private String telefone;
 
 
-    @Column(name="username", nullable = false, updatable = false)
+    @Column(name="username", nullable = false)
     private String username;
 
 
