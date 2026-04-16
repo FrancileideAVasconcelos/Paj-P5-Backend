@@ -118,7 +118,14 @@ public class UserBean implements Serializable {
     }
 
     public UserEntity getUser(String token) {
-        return tokenDao.getUserByToken(token);
+        UserEntity user = tokenDao.getUserByToken(token);
+
+        if (user != null) {
+            // SE O TOKEN É VÁLIDO E ELE FEZ UM PEDIDO -> RENOVA A SESSÃO!
+            tokenDao.renovarSessao(token);
+        }
+
+        return user;
     }
 
     public void updateUser(UserEntity user, UserDto novosDados) {

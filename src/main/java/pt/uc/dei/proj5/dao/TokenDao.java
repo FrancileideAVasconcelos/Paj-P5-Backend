@@ -1,7 +1,9 @@
 package pt.uc.dei.proj5.dao;
 
 import jakarta.ejb.Stateless;
+import jakarta.inject.Inject;
 import jakarta.persistence.NoResultException;
+import pt.uc.dei.proj5.beans.ConfigBean;
 import pt.uc.dei.proj5.entity.TokenEntity;
 import pt.uc.dei.proj5.entity.UserEntity;
 
@@ -14,6 +16,9 @@ import java.util.Base64;
 
 @Stateless
 public class TokenDao extends DefaultDao<TokenEntity> implements Serializable {
+
+    @Inject
+    ConfigBean configBean;
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -34,18 +39,17 @@ public class TokenDao extends DefaultDao<TokenEntity> implements Serializable {
     }
 
     public void guardarTokenDB(String tokenLimpo, UserEntity u) {
-
         String tokenEncriptado = encriptar(tokenLimpo);
 
-        // Guarda o token na tabela 'token' associado a este utilizador
         TokenEntity tokenEntity = new TokenEntity();
-        tokenEntity.setToken(tokenEncriptado); // A Primary Key é o token encriptado
+        tokenEntity.setToken(tokenEncriptado);
         tokenEntity.setUserId(u);
         tokenEntity.setDataSessao(LocalDateTime.now());
-        tokenEntity.setExpireTime(LocalDateTime.now().plusHours(1)); // Expira numa hora
+
+        // --- ALTERADO AQUI: Usa a configuração em vez de plusHours(1) ---
+        tokenEntity.setExpireTime(LocalDateTime.now().plusMinutes(configBean.getSessionTimeoutMinutos()));
 
         persist(tokenEntity);
-
     }
 
     public UserEntity getUserByToken(String token) {
@@ -71,6 +75,16 @@ public class TokenDao extends DefaultDao<TokenEntity> implements Serializable {
         em.createQuery("UPDATE TokenEntity t SET t.expireTime = CURRENT_TIMESTAMP WHERE t.token = :token")
                 .setParameter("token", tokenEncriptado)
                 .executeUpdate();
+    }
+
+    // Empurra o tempo de expiração para a frente porque o utilizador demonstrou atividade
+    public void renovarSessao(String tokenLimpo) {
+        String tokenEncriptado = encriptar(tokenLimpo);
+        TokenEntity t = em.find(TokenEntity.class, tokenEncriptado);
+        if (t != null) {
+            t.setExpireTime(LocalDateTime.now().plusMinutes(configBean.getSessionTimeoutMinutos()));
+            merge(t); // Atualiza na Base de Dados
+        }
     }
 
 }
