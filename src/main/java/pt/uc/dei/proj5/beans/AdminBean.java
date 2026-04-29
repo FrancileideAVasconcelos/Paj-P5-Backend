@@ -138,7 +138,7 @@ public class AdminBean implements Serializable {
         UserEntity alvo = userDao.checkUsername(usernameAlvo);
         if (alvo == null) throw new NotFoundException("Utilizador alvo não encontrado.");
 
-        List<ClienteEntity> clients = clienteDao.findAllByUserForAdmin(alvo);
+        List<ClienteEntity> clients = clienteDao.findAllByUser(alvo);
         List<ClientDto> dtos = new ArrayList<>();
         for (ClienteEntity c : clients) {
             dtos.add(clientBean.converForDto(c));
@@ -208,7 +208,7 @@ public class AdminBean implements Serializable {
         UserEntity alvo = userDao.checkUsername(usernameAlvo);
         if (alvo == null) throw new NotFoundException("Utilizador alvo não encontrado.");
 
-        List<LeadEntity> leads = leadDao.findAllByUserForAdmin(alvo);
+        List<LeadEntity> leads = leadDao.findAllByUser(alvo);
         List<LeadDto> dtos = new ArrayList<>();
         for (LeadEntity l : leads) {
             dtos.add(leadBean.converterParaDto(l));

@@ -3,6 +3,7 @@ package pt.uc.dei.proj5.dao;
 import jakarta.ejb.Stateless;
 import pt.uc.dei.proj5.dto.ClientDto;
 import pt.uc.dei.proj5.entity.ClienteEntity;
+import pt.uc.dei.proj5.entity.LeadEntity;
 import pt.uc.dei.proj5.entity.UserEntity;
 
 import java.io.Serializable;
@@ -84,7 +85,12 @@ public class ClienteDao extends DefaultDao<ClienteEntity> implements Serializabl
 
     // ======== ADMIN ===========//
 
-    public List<ClienteEntity> findAllByUserForAdmin(UserEntity user) {
+    public List<ClienteEntity> findAllClients() {
+        return em.createQuery("select c from ClienteEntity c", ClienteEntity.class)
+                .getResultList();
+    }
+
+    public List<ClienteEntity> findAllByUser(UserEntity user) {
         return em.createQuery("SELECT c FROM ClienteEntity c WHERE c.users = :user", ClienteEntity.class)
                 .setParameter("user", user)
                 .getResultList();

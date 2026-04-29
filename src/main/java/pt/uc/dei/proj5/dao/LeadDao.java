@@ -80,7 +80,14 @@ public class LeadDao extends DefaultDao<LeadEntity> implements Serializable {
 
     // ========= ADMIN =========//
 
-    public List<LeadEntity> findAllByUserForAdmin(UserEntity user) {
+    public List<LeadEntity> findAllLeads() {
+        return em.createQuery("select l from LeadEntity l", LeadEntity.class)
+                .getResultList();
+    }
+
+    // Este método serve tanto para o Admin "espreitar" um user,
+    // como para o próprio user ver o seu dashboard.
+    public List<LeadEntity> findAllByUser(UserEntity user) {
         return em.createQuery("SELECT l FROM LeadEntity l WHERE l.users = :user", LeadEntity.class)
                 .setParameter("user", user)
                 .getResultList();

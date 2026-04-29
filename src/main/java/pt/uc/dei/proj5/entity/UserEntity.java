@@ -1,9 +1,11 @@
 package pt.uc.dei.proj5.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.List;
 
 
@@ -117,6 +119,11 @@ public class UserEntity implements Serializable {
         return isAtivo;
     }
 
+    @CreationTimestamp
+    @Column(name = "dataCriacao", nullable = false, updatable = false)
+    private LocalDate dataCriacao;
+
+
     public List<TokenEntity> getTokens() {
         return tokens;
     }
@@ -160,6 +167,9 @@ public class UserEntity implements Serializable {
     public void setIsAtivo(boolean ativo) {
         this.isAtivo = ativo;
     }
+
+    public LocalDate getDataCriacao() { return dataCriacao; }
+    public void setDataCriacao(LocalDate dataCriacao) { this.dataCriacao = dataCriacao; }
 
     public void setTokens(List<TokenEntity> tokens) {
         this.tokens = tokens;
