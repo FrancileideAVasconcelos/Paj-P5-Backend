@@ -50,11 +50,10 @@ public class AdminService extends BaseService {
 
     @GET
     @Path("/users")
-    public Response getAllUsers(@HeaderParam("token") String token) {
-
+    // Adicionamos o @QueryParam("search")
+    public Response getAllUsers(@HeaderParam("token") String token, @QueryParam("search") String search) {
         validarAdmin(token);
-        List<UserDto> users = adminBean.getAllUsers();
-
+        List<UserDto> users = adminBean.getAllUsers(search);
         return Response.status(Response.Status.OK).entity(users).build();
     }
 

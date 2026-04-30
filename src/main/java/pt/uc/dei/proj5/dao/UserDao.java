@@ -38,9 +38,29 @@ public class UserDao extends DefaultDao<UserEntity> implements Serializable {
         }
     }
 
-    // Vai buscar TODOS os utilizadores (Ativos e Inativos) para o painel de Admin
     public List<UserEntity> findAllUsers() {
         return em.createQuery("SELECT u FROM UserEntity u", UserEntity.class).getResultList();
+    }
+
+    // Vai buscar os utilizadores, permitindo pesquisa por username ou email e já ordenando
+    public List<UserEntity> findFilteredUsers(String search) {
+        String jpql = "SELECT u FROM UserEntity u";
+
+        // Se houver um termo de pesquisa, adicionamos a cláusula WHERE
+        if (search != null && !search.trim().isEmpty()) {
+            jpql += " WHERE LOWER(u.username) LIKE :search OR LOWER(u.email) LIKE :search";
+        }
+
+        // O enunciado pede ordenação no backend, por isso ordenamos pelos nomes
+        jpql += " ORDER BY u.primeiroNome ASC, u.ultimoNome ASC";
+
+        var query = em.createQuery(jpql, UserEntity.class);
+
+        if (search != null && !search.trim().isEmpty()) {
+            query.setParameter("search", "%" + search.toLowerCase() + "%");
+        }
+
+        return query.getResultList();
     }
 
 

@@ -54,12 +54,9 @@ public class ChatService extends BaseService {
     }
 
     @GET
-    @Path("/unread")
-    public Response getUnreadCount(@HeaderParam("token") String token) {
+    @Path("/contactos")
+    public Response getContactosOrdenados(@HeaderParam("token") String token) {
         UserEntity eu = validarAcesso(token);
-        long count = chatBean.getUnreadCount(eu.getUsername());
-
-        // Devolve o número em formato JSON: { "count": X }
-        return Response.ok(Collections.singletonMap("count", count)).build();
+        return Response.ok(chatBean.getContactosOrdenados(eu)).build();
     }
 }

@@ -7,6 +7,7 @@ import jakarta.json.bind.JsonbBuilder;
 import pt.uc.dei.proj5.dao.MensagemDao;
 import pt.uc.dei.proj5.dao.UserDao;
 import pt.uc.dei.proj5.dto.MensagemDto;
+import pt.uc.dei.proj5.dto.UserDto;
 import pt.uc.dei.proj5.entity.MensagemEntity;
 import pt.uc.dei.proj5.entity.UserEntity;
 import pt.uc.dei.proj5.websocket.NotificationWebSocketManager;
@@ -29,6 +30,41 @@ public class ChatBean {
 
     @Inject
     NotificationWebSocketManager notifManager;
+
+
+    // 5. Vai buscar os contactos e ordena-os pela mensagem mais recente
+    public List<UserDto> getContactosOrdenados(UserEntity eu) {
+        List<UserEntity> ativos = userDao.getActiveUsersExcluindo(eu.getUsername());
+        List<pt.uc.dei.proj5.dto.UserDto> dtos = new ArrayList<>();
+
+        // Mapa para guardar a data de cada um temporariamente
+        java.util.Map<String, java.time.LocalDateTime> ultimasDatas = new java.util.HashMap<>();
+
+        for (UserEntity u : ativos) {
+            pt.uc.dei.proj5.dto.UserDto dto = new pt.uc.dei.proj5.dto.UserDto();
+            dto.setUsername(u.getUsername());
+            dto.setPrimeiroNome(u.getPrimeiroNome());
+            dto.setUltimoNome(u.getUltimoNome());
+            dto.setFotoUrl(u.getFotoUrl());
+            // Mantém a lógica das notificações não lidas!
+            dto.setUnreadCount(mensagemDao.contarNaoLidasDe(u, eu));
+
+            // Descobre a data da última mensagem
+            java.time.LocalDateTime ultima = mensagemDao.getUltimaInteracao(eu, u);
+            if (ultima == null) {
+                // Se nunca falaram, coloca uma data "zero" (1970) para irem para o fundo da lista
+                ultima = java.time.LocalDateTime.of(1970, 1, 1, 0, 0);
+            }
+            ultimasDatas.put(u.getUsername(), ultima);
+
+            dtos.add(dto);
+        }
+
+        // Ordena a lista: Data mais recente (maior) para a mais antiga (menor)
+        dtos.sort((d1, d2) -> ultimasDatas.get(d2.getUsername()).compareTo(ultimasDatas.get(d1.getUsername())));
+
+        return dtos;
+    }
 
     // 1. Grava na BD via REST e avisa via WebSocket
     public MensagemDto enviarMensagem(String remetenteUsername, String destinatarioUsername, String conteudo) throws Exception {
@@ -105,9 +141,12 @@ public class ChatBean {
         notifManager.sendNotification(leitorUsername, unreadJson); // <-- Alterado aqui!
     }
 
-    // 4. Vai buscar apenas o número de notificações ao fazer login inicial
+    // 4. Vai buscar apenas o número de notificações globais não lidas (usado no login/refresh)
     public long getUnreadCount(String username) {
         UserEntity user = userDao.checkUsername(username);
-        return mensagemDao.contarNaoLidas(user);
+        if (user != null) {
+            return mensagemDao.contarNaoLidas(user);
+        }
+        return 0;
     }
 }

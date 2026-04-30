@@ -85,11 +85,10 @@ public class AdminBean implements Serializable {
         emailBean.sendEmail(email, subject, body);
     }
 
-    // Devolve a lista de todos os utilizadores em formato DTO
-    public List<UserDto> getAllUsers() {
-        List<UserEntity> users = userDao.findAllUsers();
+    // Passamos a receber a string de pesquisa
+    public List<UserDto> getAllUsers(String search) {
+        List<UserEntity> users = userDao.findFilteredUsers(search); // Chama o novo método!
         List<UserDto> dtos = new ArrayList<>();
-
         for (UserEntity u : users) {
             dtos.add(userBean.converterParaDto(u));
         }

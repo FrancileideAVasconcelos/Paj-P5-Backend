@@ -52,4 +52,19 @@ public class MensagemDao extends DefaultDao<MensagemEntity> implements Serializa
                 .setParameter("destinatario", destinatario)
                 .executeUpdate();
     }
+
+    // Vai buscar a data da última mensagem trocada entre duas pessoas
+    public java.time.LocalDateTime getUltimaInteracao(UserEntity u1, UserEntity u2) {
+        try {
+            return em.createQuery(
+                            "SELECT MAX(m.dataEnvio) FROM MensagemEntity m WHERE " +
+                                    "(m.remetente = :u1 AND m.destinatario = :u2) OR " +
+                                    "(m.remetente = :u2 AND m.destinatario = :u1)", java.time.LocalDateTime.class)
+                    .setParameter("u1", u1)
+                    .setParameter("u2", u2)
+                    .getSingleResult();
+        } catch (Exception e) {
+            return null;
+        }
+    }
 }
