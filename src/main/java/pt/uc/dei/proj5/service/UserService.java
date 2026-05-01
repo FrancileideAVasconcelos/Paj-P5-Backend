@@ -10,6 +10,9 @@ import pt.uc.dei.proj5.dao.MensagemDao;
 import pt.uc.dei.proj5.dao.UserDao;
 import pt.uc.dei.proj5.dto.UserDto;
 import pt.uc.dei.proj5.entity.UserEntity;
+import pt.uc.dei.proj5.utils.AppConstants;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.Collections;
 import java.util.List;
@@ -18,6 +21,8 @@ import java.util.List;
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public class UserService extends BaseService {
+
+    private static final Logger logger = LogManager.getLogger(UserService.class);
 
     @Inject
     UserBean userBean;
@@ -28,58 +33,75 @@ public class UserService extends BaseService {
     @Inject
     MensagemDao mensagemDao;
 
-
     @POST
     @Path("/login")
     public Response login(UserDto user) {
         // Validação básica de campos vazios
         if (user.getUsername() == null || user.getPassword() == null) {
+            logger.warn("Tentativa de login com dados incompletos.");
             return Response.status(401).entity("Dados incompletos!").build();
         }
 
-        // Chama o novo método que retorna o token
         String token = userBean.loginToken(user.getUsername(), user.getPassword());
 
         if (token != null) {
-            // Devolve o token ao utilizador em formato JSON
+            logger.info("Utilizador: {} | Ação: Fez login com sucesso no sistema.",
+                    user.getUsername());
             return Response.status(200).entity(Collections.singletonMap("token", token)).build();
         }
 
-        // Se a autenticação falhar [cite: 115]
-        return Response.status(401).entity("Credenciais inválidas ou conta não confirmada!").build();    }
-
+        logger.warn("Utilizador: {} | Ação: Falhou a autenticação (Password incorreta ou conta inativa).",
+                user.getUsername());
+        return Response.status(401).entity(AppConstants.CREDENCIAIS_INVALIDAS).build();
+    }
 
     @POST
     @Path("/logout")
     public Response logout(@HeaderParam("token") String token) {
+        // Vamos buscar o utilizador antes de invalidar o token para podermos saber quem fez logout
+        UserEntity user = validarAcesso(token);
+
         userBean.logout(token);
-        // endpoint e retorna 200 Success
+
+        logger.info("Utilizador: {} | Ação: Terminou a sessão (Logout).",
+                user.getUsername());
+
         return Response.status(200).build();
     }
 
     @POST
     @Path("/complete-registration")
     public Response completeRegistration(@QueryParam("token") String token, UserDto dto) {
-
-        // --- DETETIVE ---
-        System.out.println("Token que chegou ao completar registo: [" + token + "]");
-
-        if (token == null) return Response.status(400).entity("Token não fornecido.").build();
+        if (token == null) {
+            logger.warn("Tentativa de completar registo sem fornecer token.");
+            return Response.status(400).entity("Token não fornecido.").build();
+        }
 
         String resultado = userBean.completeRegistration(token, dto);
+
         if (resultado.equals("Registo concluído com sucesso!")) {
+            logger.info("Utilizador: {} | Ação: Completou o registo da conta com sucesso.",
+                    dto.getUsername());
             return Response.ok().entity(resultado).build();
         }
+
+        logger.warn("Tentativa falhada ao completar registo: {}", resultado);
         return Response.status(400).entity(resultado).build();
     }
 
     @POST
     @Path("/forgot-password")
-    public Response forgotPassword(UserDto userDto) throws Exception { // Enviamos o email no body através do Dto
-        if (userDto.getEmail() == null) return Response.status(400).entity("Email obrigatório").build();
+    public Response forgotPassword(UserDto userDto) throws Exception {
+        if (userDto.getEmail() == null) {
+            logger.warn("Pedido de recuperação de password rejeitado (Sem email).");
+            return Response.status(400).entity("Email obrigatório").build();
+        }
 
         userBean.forgotPassword(userDto.getEmail());
-        // Devolvemos sempre OK para não dar pistas a hackers de quais emails existem na BD
+
+        logger.info("Ação: Pedido de recuperação de password processado para o email '{}'.",
+                userDto.getEmail());
+
         return Response.ok().entity("Se o email existir, receberá as instruções.").build();
     }
 
@@ -87,23 +109,25 @@ public class UserService extends BaseService {
     @Path("/reset-password")
     public Response resetPassword(@QueryParam("token") String token, UserDto dto) {
         if (token == null || dto.getPassword() == null) {
+            logger.warn("Tentativa de reset de password com dados incompletos.");
             return Response.status(400).entity("Dados incompletos.").build();
         }
 
         String resultado = userBean.resetPassword(token, dto.getPassword());
+
         if (resultado.equals("Password redefinida com sucesso!")) {
+            logger.info("Ação: Password redefinida com sucesso através do token de recuperação.");
             return Response.ok().entity(resultado).build();
         }
+
+        logger.warn("Tentativa falhada de reset de password: {}", resultado);
         return Response.status(400).entity(resultado).build();
     }
 
     @GET
     @Path("/profile")
     public Response getUserProfile(@HeaderParam("token") String token) {
-
         UserEntity userEntity = validarAcesso(token);
-
-        // 2. Convertes diretamente para DTO e devolves OK (Sem Magic Constants)
         UserDto user = userBean.converterParaDto(userEntity);
 
         return Response.status(Response.Status.OK).entity(user).build();
@@ -111,39 +135,35 @@ public class UserService extends BaseService {
 
     @PATCH
     @Path("/perfil")
-    public Response updateProfile(@HeaderParam("token") String token,
-                                   @Valid UserDto dadosNovos) {
-
+    public Response updateProfile(@HeaderParam("token") String token, @Valid UserDto dadosNovos) {
         UserEntity user = validarAcesso(token);
 
-        // Se falhar (ex: email já existe), o Bean atira um erro e o Mapper devolve 409
         userBean.updateUser(user, dadosNovos);
 
-        // Caminho feliz:
+        logger.info("Utilizador: {} | Ação: Atualizou os seus dados de perfil.",
+                user.getUsername());
+
         return Response.status(Response.Status.OK).entity("Perfil atualizado com sucesso!").build();
     }
 
     @GET
     @Path("/checkPass")
-    public Response verificaPassword(
-            @HeaderParam("token") String token,
-            @HeaderParam("passatual") String password) { // 1. TUDO EM MINÚSCULAS!
-
+    public Response verificaPassword(@HeaderParam("token") String token, @HeaderParam("passatual") String password) {
         UserEntity user = validarAcesso(token);
-
-        // ADICIONA ESTAS 3 LINHAS PARA DEBUG:
-        System.out.println("--- DEBUG DE PASSWORD ---");
-        System.out.println("Password na Base de Dados: [" + user.getPassword() + "]");
-        System.out.println("Password recebida do React: [" + password + "]");
 
         boolean passwordCorreta = userBean.verificaPassword(user, password);
 
         if (!passwordCorreta) {
-            // 2. MUDA PARA FORBIDDEN (403) PARA O REACT NÃO FAZER LOGOUT!
+            logger.warn("Utilizador: {} | Ação: Falhou a confirmação da password atual durante a edição do perfil.",
+                    user.getUsername());
+
             return Response.status(Response.Status.FORBIDDEN)
                     .entity("A password atual está incorreta.")
                     .build();
         }
+
+        logger.info("Utilizador: {} | Ação: Confirmou a password atual com sucesso.",
+                user.getUsername());
 
         return Response.status(Response.Status.OK)
                 .entity("Password confirmada com sucesso.")
@@ -164,7 +184,6 @@ public class UserService extends BaseService {
             dto.setUltimoNome(u.getUltimoNome());
             dto.setFotoUrl(u.getFotoUrl());
 
-            // --- NOVO: Pede ao DAO quantas mensagens não lidas tens desta pessoa! ---
             long unread = mensagemDao.contarNaoLidasDe(u, eu);
             dto.setUnreadCount(unread);
 

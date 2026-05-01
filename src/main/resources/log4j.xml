@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Appenders>
+        <!-- 1. Mostrar os logs na Consola (útil para ti enquanto programas) -->
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} [%t] %-5level %logger{36} - %msg%n"/>
+        </Console>
+
+        <!-- 2. Guardar os logs de Auditoria num ficheiro rotativo (cria um novo ficheiro se ficar muito grande) -->
+        <RollingFile name="AuditFile" fileName="logs/auditoria.log"
+                     filePattern="logs/auditoria-%d{yyyy-MM-dd}-%i.log">
+            <!-- O formato: Data/Hora | Nível | Classe | Mensagem -->
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} | %-5level | %msg%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy />
+                <SizeBasedTriggeringPolicy size="10 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="10"/>
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+        <!-- Configura a nossa app para usar os dois Appenders -->
+        <Root level="info">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="AuditFile"/>
+        </Root>
+    </Loggers>
+</Configuration>

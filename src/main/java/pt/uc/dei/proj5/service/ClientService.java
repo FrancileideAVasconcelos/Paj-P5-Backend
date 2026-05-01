@@ -1,5 +1,7 @@
 package pt.uc.dei.proj5.service;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
@@ -8,13 +10,17 @@ import jakarta.ws.rs.core.Response;
 import pt.uc.dei.proj5.beans.ClientBean;
 import pt.uc.dei.proj5.dto.ClientDto;
 import pt.uc.dei.proj5.entity.UserEntity;
-import pt.uc.dei.proj5.utils.AppConstants; // A tua nova classe de constantes
+import pt.uc.dei.proj5.utils.AppConstants;
+
 import java.util.List;
 
 @Path("/clients")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public class ClientService extends BaseService {
+
+    // 1. INICIALIZAR O LOGGER
+    private static final Logger logger = LogManager.getLogger(ClientService.class);
 
     @Inject
     private ClientBean clientBean;
@@ -25,6 +31,10 @@ public class ClientService extends BaseService {
 
         // Se houver duplicação, o Bean lança Exception e o teu GenericExceptionMapper devolve 409
         ClientDto novo = clientBean.registarCliente(dto, user);
+
+        // 2. LOG DE SUCESSO (Criação)
+        logger.info("Utilizador: {} | Ação: Criou o cliente '{}' (Empresa: {}).",
+                user.getUsername(), novo.getNome(), novo.getEmpresa());
 
         return Response.status(Response.Status.CREATED).entity(novo).build(); // 201
     }
@@ -61,7 +71,11 @@ public class ClientService extends BaseService {
         // Se duplicar nome -> Lança Exception -> Mapper devolve 409
         clientBean.editarCliente(id, dto, user.getUsername());
 
-        return Response.status(Response.Status.OK).entity("Cliente atualizado com sucesso").build();
+        // 3. LOG DE SUCESSO (Edição)
+        logger.info("Utilizador: {} | Ação: Editou os dados do cliente com o ID: {}.",
+                user.getUsername(), id);
+
+        return Response.status(Response.Status.OK).entity(AppConstants.CLIENTE_ATUALIZADO_SUCESSO).build();
     }
 
     @DELETE
@@ -76,6 +90,10 @@ public class ClientService extends BaseService {
         if (sucess == 0) {
             throw new NotFoundException(AppConstants.CLIENTE_NAO_ENCONTRADO); // 404
         }
+
+        // 4. LOG DE SUCESSO (Inativação - usamos WARN por ser uma ação de remoção)
+        logger.warn("Utilizador: {} | Ação: Inativou o cliente com o ID: {}.",
+                user.getUsername(), id);
 
         return Response.status(Response.Status.OK).entity(AppConstants.CLIENTE_REMOVIDO_SUCESSO).build(); // 200
     }
