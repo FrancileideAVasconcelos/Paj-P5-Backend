@@ -53,7 +53,7 @@ public class LeadService extends BaseService{
     public Response getLeadById(@PathParam("id") Long id,@HeaderParam("token") String token) {
         UserEntity user = validarAcesso(token);
 
-        LeadDto lead = leadBean.getLeadById(id, user.getUsername());
+        LeadDto lead = leadBean.getLeadById(id, user);
 
         if (lead == null) {
             throw new NotFoundException(AppConstants.LEAD_NAO_ENCONTRADA);

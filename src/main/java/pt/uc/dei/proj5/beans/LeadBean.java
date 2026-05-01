@@ -50,17 +50,16 @@ public class LeadBean implements Serializable {
         return leadDto;
     }
 
-    public LeadDto getLeadById(Long id, String usernameRequester) {
-        // 1. Usa o método que já tens no teu LeadDao
+    public LeadDto getLeadById(Long id, UserEntity requester) {
+
         LeadEntity lead = leadDao.findLeadById(id);
 
-        if (!lead.getUser().getUsername().equals(usernameRequester)) {
-            throw new SecurityException("Acesso Negado: Esta Lead pertence a outro utilizador.");
+        if (lead == null || (!lead.isAtivo() && !requester.isAdmin())) {
+            return null;
         }
 
-        // 2. Verifica se existe e se está ativo (visto que usas isAtivo para soft delete)
-        if (lead == null || !lead.isAtivo()) {
-            return null;
+        if (!lead.getUser().getUsername().equals(requester.getUsername()) && !requester.isAdmin()){
+            throw new SecurityException("Acesso Negado: Esta Lead pertence a outro utilizador.");
         }
 
         return converterParaDto(lead);
@@ -68,16 +67,21 @@ public class LeadBean implements Serializable {
 
     // lista filtrada por estado
     public List<LeadDto> getFilteredLeads(UserEntity user, Integer estado){
-        List<LeadEntity> leads = leadDao.findFilteredLeads(user, estado);
+        List<LeadEntity> leads;
+
+        // A MAGIA PARA AS LEADS:
+        if (user.isAdmin()) {
+            leads = leadDao.findAllFilteredLeadsGlobal(estado);
+        } else {
+            leads = leadDao.findFilteredLeads(user, estado);
+        }
 
         List<LeadDto> dtoLeads = new ArrayList<>();
-
         if (leads != null) {
             for (LeadEntity l : leads) {
                 dtoLeads.add(converterParaDto(l));
             }
         }
-
         return dtoLeads;
     }
 

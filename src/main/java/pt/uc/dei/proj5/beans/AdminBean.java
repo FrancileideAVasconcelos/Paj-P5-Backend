@@ -103,6 +103,20 @@ public class AdminBean implements Serializable {
         return userBean.converterParaDto(alvo);
     }
 
+    public void editarUtilizadorAdmin(String usernameAlvo, UserDto dtoNovo) {
+        UserEntity alvo = userDao.checkUsername(usernameAlvo);
+        if (alvo == null) throw new NotFoundException("Utilizador não encontrado.");
+
+        // Atualiza apenas os dados pessoais
+        alvo.setPrimeiroNome(dtoNovo.getPrimeiroNome());
+        alvo.setUltimoNome(dtoNovo.getUltimoNome());
+        alvo.setEmail(dtoNovo.getEmail());
+        alvo.setTelefone(dtoNovo.getTelefone());
+        alvo.setFotoUrl(dtoNovo.getFotoUrl());
+
+        userDao.merge(alvo);
+    }
+
     public void reactivateUser(String usernameAlvo) {
 
         UserEntity alvo = userDao.checkUsername(usernameAlvo);

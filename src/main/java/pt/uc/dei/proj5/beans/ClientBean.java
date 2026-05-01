@@ -33,15 +33,14 @@ public class ClientBean implements Serializable {
         return newClient;
     }
 
-    public ClientDto getClientById(Long id, String usernameRequester) {
+    public ClientDto getClientById(Long id, UserEntity requester) {
         ClienteEntity client = clienteDao.findClienteById(id);
 
-        // 2. Verifica se existe e se está ativo (visto que usas isAtivo para soft delete)
-        if (client == null || !client.isAtivo()) {
+        if (client == null || (!client.isAtivo() && !requester.isAdmin())) {
             return null;
         }
 
-        if (!client.getUser().getUsername().equals(usernameRequester)) {
+        if (!client.getUser().getUsername().equals(requester.getUsername()) && !requester.isAdmin()) {
             throw new SecurityException("Acesso Negado: Este cliente pertence a outro utilizador.");
         }
 
@@ -73,10 +72,16 @@ public class ClientBean implements Serializable {
 
         if (user == null) return new ArrayList<>();
 
-        List<ClienteEntity> entidades = clienteDao.findAllActiveByUser(user);
+        List<ClienteEntity> entidades;
+
+        // A MAGIA: Se for admin, vai buscar TODOS. Se não, vai buscar só os dele.
+        if (user.isAdmin()) {
+            entidades = clienteDao.findAllClients();
+        } else {
+            entidades = clienteDao.findAllActiveByUser(user);
+        }
 
         List<ClientDto> myClients = new ArrayList<>();
-
         for(ClienteEntity e : entidades){
             myClients.add(converForDto(e));
         }

@@ -58,6 +58,16 @@ public class AdminService extends BaseService {
     }
 
     @PATCH
+    @Path("/users/{username}")
+    public Response editarUtilizadorAdmin(@HeaderParam("token") String token,
+                                          @PathParam("username") String usernameAlvo,
+                                          @Valid UserDto dto) {
+        validarAdmin(token);
+        adminBean.editarUtilizadorAdmin(usernameAlvo, dto);
+        return Response.status(Response.Status.OK).entity("Dados atualizados com sucesso.").build();
+    }
+
+    @PATCH
     @Path("/users/{username}/reactivate")
     public Response reactivateUser(@HeaderParam("token") String token,
                                    @PathParam("username") String usernameAlvo) {

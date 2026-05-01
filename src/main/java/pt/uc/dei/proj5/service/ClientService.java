@@ -42,7 +42,7 @@ public class ClientService extends BaseService {
     public Response getClientById(@PathParam("id") Long id, @HeaderParam("token") String token) {
         UserEntity user = validarAcesso(token);
 
-        ClientDto client = clientBean.getClientById(id, user.getUsername());
+        ClientDto client = clientBean.getClientById(id, user);
 
         // Se não existir, atiramos NotFoundException e o Java devolve 404 automaticamente
         if (client == null) {

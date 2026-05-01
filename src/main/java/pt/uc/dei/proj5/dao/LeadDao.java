@@ -80,6 +80,23 @@ public class LeadDao extends DefaultDao<LeadEntity> implements Serializable {
 
     // ========= ADMIN =========//
 
+    // Novo método para o Admin ver a lista global (com ou sem filtro)
+    public List<LeadEntity> findAllFilteredLeadsGlobal(Integer estado) {
+        StringBuilder queryStr = new StringBuilder("SELECT l FROM LeadEntity l");
+
+        if (estado != null) {
+            queryStr.append(" WHERE l.estado = :estado");
+        }
+
+        var query = em.createQuery(queryStr.toString(), LeadEntity.class);
+
+        if (estado != null) {
+            query.setParameter("estado", estado);
+        }
+
+        return query.getResultList();
+    }
+
     public List<LeadEntity> findAllLeads() {
         return em.createQuery("select l from LeadEntity l", LeadEntity.class)
                 .getResultList();
