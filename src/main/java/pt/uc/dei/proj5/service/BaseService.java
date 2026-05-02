@@ -29,14 +29,13 @@ public abstract class BaseService {
     }
     // 2. Validação Restrita (Apenas Administradores)
     protected UserEntity validarAdmin(String token) {
-        // Primeiro, verifica se o token é válido chamando o método de cima
         UserEntity user = validarAcesso(token);
 
         // Depois, verifica se é admin (depende de como está na tua entidade UserEntity)
         // Pode ser user.isAdmin() ou user.getRole().equals("ADMIN")
         if (!user.isAdmin()) {
             // O nosso SecurityExceptionMapper vai apanhar isto e devolver erro 403 Forbidden
-            throw new SecurityException("Acesso restrito a administradores.");
+            throw new SecurityException(AppConstants.ACESSO_RESTRITO);
         }
 
         return user;

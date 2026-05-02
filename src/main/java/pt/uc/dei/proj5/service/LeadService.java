@@ -33,7 +33,6 @@ public class LeadService extends BaseService {
 
         LeadDto nova = leadBean.registarLead(leadDto, user);
 
-        // 2. LOG DE SUCESSO (Criação)
         logger.info("Utilizador: {} | Ação: Criou a lead '{}'.",
                 user.getUsername(), nova.getTitulo());
 
@@ -77,7 +76,6 @@ public class LeadService extends BaseService {
 
         leadBean.updateLead(id, dto, user.getUsername());
 
-        // 3. LOG DE SUCESSO (Edição)
         logger.info("Utilizador: {} | Ação: Editou os dados da lead com o ID: {}.",
                 user.getUsername(), id);
 
@@ -96,7 +94,6 @@ public class LeadService extends BaseService {
             throw new NotFoundException(AppConstants.LEAD_NAO_ENCONTRADA); // 404
         }
 
-        // 4. LOG DE SUCESSO (Inativação - WARN por ser ação de remoção)
         logger.warn("Utilizador: {} | Ação: Inativou a lead com o ID: {}.",
                 user.getUsername(), id);
 

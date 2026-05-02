@@ -32,7 +32,6 @@ public class ClientService extends BaseService {
         // Se houver duplicação, o Bean lança Exception e o teu GenericExceptionMapper devolve 409
         ClientDto novo = clientBean.registarCliente(dto, user);
 
-        // 2. LOG DE SUCESSO (Criação)
         logger.info("Utilizador: {} | Ação: Criou o cliente '{}' (Empresa: {}).",
                 user.getUsername(), novo.getNome(), novo.getEmpresa());
 
@@ -71,7 +70,6 @@ public class ClientService extends BaseService {
         // Se duplicar nome -> Lança Exception -> Mapper devolve 409
         clientBean.editarCliente(id, dto, user.getUsername());
 
-        // 3. LOG DE SUCESSO (Edição)
         logger.info("Utilizador: {} | Ação: Editou os dados do cliente com o ID: {}.",
                 user.getUsername(), id);
 
@@ -91,7 +89,6 @@ public class ClientService extends BaseService {
             throw new NotFoundException(AppConstants.CLIENTE_NAO_ENCONTRADO); // 404
         }
 
-        // 4. LOG DE SUCESSO (Inativação - usamos WARN por ser uma ação de remoção)
         logger.warn("Utilizador: {} | Ação: Inativou o cliente com o ID: {}.",
                 user.getUsername(), id);
 

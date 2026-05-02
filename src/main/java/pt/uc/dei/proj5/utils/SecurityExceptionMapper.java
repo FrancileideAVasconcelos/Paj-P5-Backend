@@ -42,7 +42,6 @@ public class SecurityExceptionMapper implements ExceptionMapper<SecurityExceptio
             // para garantir que o erro 403 Forbidden é sempre devolvido!
         }
 
-        // 4. GRAVA O LOG DE AUDITORIA DE SEGURANÇA (O nível WARN é perfeito para tentativas de intrusão)
         logger.warn("Utilizador: {} | Bloqueio de Acesso: {}", username, exception.getMessage());
 
         // 5. Devolve o Erro 403 ao Frontend

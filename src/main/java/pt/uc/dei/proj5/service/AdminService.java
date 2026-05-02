@@ -12,6 +12,7 @@ import pt.uc.dei.proj5.dto.LeadDto;
 import pt.uc.dei.proj5.dto.ClientDto;
 import pt.uc.dei.proj5.dto.UserDto;
 import pt.uc.dei.proj5.entity.UserEntity;
+import pt.uc.dei.proj5.utils.AppConstants;
 
 import java.util.List;
 
@@ -31,7 +32,7 @@ public class AdminService extends BaseService {
     public Response inviteUser(@HeaderParam("token") String token, UserDto dto) {
         UserEntity admin = validarAdmin(token);
         if (dto.getEmail() == null || dto.getEmail().trim().isEmpty()) {
-            return Response.status(400).entity("O e-mail é obrigatório.").build();
+            return Response.status(400).entity(AppConstants.EMAIL_OBRIGATORIO).build();
         }
 
         try {
@@ -40,7 +41,7 @@ public class AdminService extends BaseService {
             logger.info("Utilizador: {} | Ação: Enviou convite de registo para o email: '{}'",
                     admin.getUsername(), dto.getEmail());
 
-            return Response.status(200).entity("Convite enviado com sucesso para o e-mail!").build();
+            return Response.status(200).entity(AppConstants.CONVITE_ENVIADO).build();
         } catch (Exception e) {
             return Response.status(400).entity(e.getMessage()).build();
         }
@@ -78,7 +79,7 @@ public class AdminService extends BaseService {
         logger.info("Utilizador: {} | Ação: Editou dados do username: '{}'",
                 admin.getUsername(), dto.getUsername());
 
-        return Response.status(Response.Status.OK).entity("Dados atualizados com sucesso.").build();
+        return Response.status(Response.Status.OK).entity(AppConstants.DADOS_ATUALIZADOS).build();
     }
 
     @PATCH
@@ -93,7 +94,7 @@ public class AdminService extends BaseService {
         logger.warn("Utilizador: {} | Ação: Reativou o username: '{}'",
                 admin.getUsername(), usernameAlvo);
 
-        return Response.status(Response.Status.OK).entity("Utilizador reativado com sucesso.").build();
+        return Response.status(Response.Status.OK).entity(AppConstants.UTILIZADOR_REATIVADO).build();
     }
 
     @DELETE
@@ -119,7 +120,7 @@ public class AdminService extends BaseService {
                     admin.getUsername(), usernameAlvo);
 
             // Mensagem corrigida para corresponder à inativação
-            return Response.status(Response.Status.OK).entity("Utilizador inativado com sucesso.").build();
+            return Response.status(Response.Status.OK).entity(AppConstants.UTILIZADOR_INATIVADO).build();
         }
     }
 
@@ -147,7 +148,7 @@ public class AdminService extends BaseService {
         logger.warn("Utilizador: {} | Ação: Reativou o cliente com o id: '{}'",
                 admin.getUsername(), idCliente);
 
-        return Response.status(Response.Status.OK).entity("Cliente reativado com sucesso.").build();
+        return Response.status(Response.Status.OK).entity(AppConstants.CLIENTE_REATIVADO).build();
     }
 
     @PATCH
@@ -161,7 +162,7 @@ public class AdminService extends BaseService {
         logger.info("Utilizador: {} | Ação: Reativou todos os clientes do username: '{}'",
                 admin.getUsername(), usernameAlvo);
 
-        return Response.status(Response.Status.OK).entity("Todos os clientes foram reativados com sucesso.").build();
+        return Response.status(Response.Status.OK).entity(AppConstants.TODOS_CLIENTES_REATIVADOS).build();
     }
 
     @DELETE
@@ -173,7 +174,7 @@ public class AdminService extends BaseService {
         UserEntity admin = validarAdmin(token);
 
         adminBean.apagarTodosClientesDeUser( usernameAlvo, permanente);
-        String msg = permanente ? "Todos os clientes excluídos permanentemente." : "Todos os clientes inativados.";
+        String msg = permanente ? (AppConstants.TODOS_CLIENTES_EXCLUIDOS) : (AppConstants.TODOS_CLIENTES_INATIVADOS);
 
         if (permanente) {
             logger.warn("Utilizador: {} | Ação: Apagou TODOS os clientes de '{}' permanentemente.",
@@ -201,7 +202,7 @@ public class AdminService extends BaseService {
         logger.info("Utilizador: {} | Ação: Editou o cliente com o id: '{}'",
                 admin.getUsername(), idCliente);
 
-        return Response.status(Response.Status.OK).entity("Cliente atualizado com sucesso (Admin).").build();
+        return Response.status(Response.Status.OK).entity(AppConstants.CLIENTE_ATUALIZADO_SUCESSO).build();
 
     }
 
@@ -215,7 +216,7 @@ public class AdminService extends BaseService {
         UserEntity admin = validarAdmin(token);
 
         adminBean.apagarClienteAdmin(idCliente, permanente);
-        String msg = permanente ? "Cliente excluído permanentemente." : "Cliente inativado com sucesso.";
+        String msg = permanente ? (AppConstants.CLIENTE_EXCLUIDO) : (AppConstants.CLIENTE_INATIVADO);
 
         if (permanente) {
             logger.warn("Utilizador: {} | Ação: Apagou o cliente com o id: '{}' permanentemente.",
@@ -256,7 +257,7 @@ public class AdminService extends BaseService {
         logger.info("Utilizador: {} | Ação: Editou a lead com o id: '{}'.",
                 admin.getUsername(), idLead);
 
-        return Response.status(Response.Status.OK).entity("Lead atualizada com sucesso (Admin).").build();
+        return Response.status(Response.Status.OK).entity(AppConstants.LEAD_ATUALIZADA_SUCESSO).build();
 
     }
 
@@ -271,7 +272,7 @@ public class AdminService extends BaseService {
         logger.info("Utilizador: {} | Ação: Reativou a lead com o id: '{}'.",
                 admin.getUsername(), idLead);
 
-        return Response.status(Response.Status.OK).entity("Lead reativada com sucesso.").build();
+        return Response.status(Response.Status.OK).entity(AppConstants.LEAD_REATIVADA).build();
 
     }
 
@@ -286,7 +287,7 @@ public class AdminService extends BaseService {
         logger.info("Utilizador: {} | Ação: Reativou TODAS as leads do username: '{}'.",
                 admin.getUsername(), usernameAlvo);
 
-        return Response.status(Response.Status.OK).entity("Todas as leads reativadas com sucesso.").build();
+        return Response.status(Response.Status.OK).entity(AppConstants.TODAS_LEADS_REATIVADAS).build();
     }
 
     @DELETE
@@ -298,7 +299,7 @@ public class AdminService extends BaseService {
         UserEntity admin = validarAdmin(token);
         adminBean.apagarTodasLeadsDeUser(usernameAlvo, permanente);
 
-        String msg = permanente ? "Leads excluídas permanentemente." : "Leads inativadas com sucesso.";
+        String msg = permanente ? (AppConstants.TODAS_LEADS_EXCLUIDAS) : (AppConstants.TODAS_LEADS_INATIVADAS);
 
         if (permanente) {
             logger.warn("Utilizador: {} | Ação: Apagou TODAS as leads do username: '{}' permanentemente.",
@@ -320,7 +321,7 @@ public class AdminService extends BaseService {
         UserEntity admin = validarAdmin(token);
         adminBean.apagarLeadAdmin(idLead, permanente);
 
-        String msg = permanente ? "Lead excluída permanentemente." : "Lead inativada com sucesso.";
+        String msg = permanente ? AppConstants.LEAD_EXCLUIDA : AppConstants.LEAD_INATIVADA;
 
         if (permanente) {
             logger.warn("Utilizador: {} | Ação: Apagou a lead com o id: '{}' permanentemente.",

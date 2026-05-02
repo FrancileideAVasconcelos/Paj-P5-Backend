@@ -29,13 +29,13 @@ public class DashboardBean {
     public DashboardDto getStats(UserEntity user) {
         DashboardDto dto = new DashboardDto();
         // Formata a data para yyyy-MM-dd para ficar fácil de ler no React
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
 
         if (user.isAdmin()) {
             // ==========================================
             // VISÃO DE ADMINISTRADOR (Global)
             // ==========================================
-            List<LeadEntity> allLeads = leadDao.findAllLeads(); // Assumindo que criaste isto no DAO!
+            List<LeadEntity> allLeads = leadDao.findAllLeads();
             List<ClienteEntity> allClients = clienteDao.findAllClients();
             List<UserEntity> allUsers = userDao.findAllUsers();
 
