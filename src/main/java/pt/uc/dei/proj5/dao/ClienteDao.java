@@ -49,11 +49,18 @@ public class ClienteDao extends DefaultDao<ClienteEntity> implements Serializabl
         return em.find(ClienteEntity.class, id);
     }
 
-    // Lista apenas os clientes de um determinado utilizador
-    public List<ClienteEntity> findAllActiveByUser(UserEntity user) {
-        return em.createQuery("SELECT c FROM ClienteEntity c WHERE c.users = :user AND c.isAtivo = true", ClienteEntity.class)
-                .setParameter("user", user)
-                .getResultList();
+    // Para o Utilizador Normal (Procura apenas nos seus clientes)
+    public List<ClienteEntity> findAllActiveByUser(UserEntity user, String search) {
+        String jpql = "SELECT c FROM ClienteEntity c WHERE c.users = :user AND c.isAtivo = true";
+        if (search != null && !search.trim().isEmpty()) {
+            jpql += " AND LOWER(c.nome) LIKE :search";
+        }
+        jpql += " ORDER BY c.nome ASC"; // Ordenação Alfabética!
+
+        var q = em.createQuery(jpql, ClienteEntity.class);
+        q.setParameter("user", user);
+        if (search != null && !search.trim().isEmpty()) q.setParameter("search", "%" + search.toLowerCase() + "%");
+        return q.getResultList();
     }
 
     public boolean existsByNomeAndEmpresa(String nome, String empresa) {
@@ -85,9 +92,61 @@ public class ClienteDao extends DefaultDao<ClienteEntity> implements Serializabl
 
     // ======== ADMIN ===========//
 
-    public List<ClienteEntity> findAllClients() {
-        return em.createQuery("select c from ClienteEntity c", ClienteEntity.class)
-                .getResultList();
+    // Método ultra-rápido para o Dashboard do Admin
+    public long countAllClients() {
+        return em.createQuery("SELECT COUNT(c) FROM ClienteEntity c", Long.class)
+                .getSingleResult();
+    }
+
+    // Método ultra-rápido para o Dashboard do Utilizador Normal
+    public long countAllActiveByUser(UserEntity user) {
+        return em.createQuery("SELECT COUNT(c) FROM ClienteEntity c WHERE c.users = :user AND c.isAtivo = true", Long.class)
+                .setParameter("user", user)
+                .getSingleResult();
+    }
+
+    public List<ClienteEntity> findFilteredClientsPaginated(UserEntity user, String search, int page, int pageSize) {
+        boolean isAdmin = user.isAdmin();
+        String jpql = isAdmin ? "SELECT c FROM ClienteEntity c WHERE 1=1"
+                : "SELECT c FROM ClienteEntity c WHERE c.users = :user AND c.isAtivo = true";
+        if (search != null && !search.trim().isEmpty()) {
+            jpql += isAdmin ? " AND (LOWER(c.nome) LIKE :search OR LOWER(c.users.username) LIKE :search OR LOWER(c.users.primeiroNome) LIKE :search)"
+                    : " AND LOWER(c.nome) LIKE :search";
+        }
+        jpql += " ORDER BY c.nome ASC";
+        var q = em.createQuery(jpql, ClienteEntity.class);
+        if (!isAdmin) q.setParameter("user", user);
+        if (search != null && !search.trim().isEmpty()) q.setParameter("search", "%" + search.toLowerCase() + "%");
+
+        q.setFirstResult((page - 1) * pageSize);
+        q.setMaxResults(pageSize);
+        return q.getResultList();
+    }
+
+    public long countFilteredClients(UserEntity user, String search) {
+        boolean isAdmin = user.isAdmin();
+        String jpql = isAdmin ? "SELECT COUNT(c) FROM ClienteEntity c WHERE 1=1"
+                : "SELECT COUNT(c) FROM ClienteEntity c WHERE c.users = :user AND c.isAtivo = true";
+        if (search != null && !search.trim().isEmpty()) {
+            jpql += isAdmin ? " AND (LOWER(c.nome) LIKE :search OR LOWER(c.users.username) LIKE :search OR LOWER(c.users.primeiroNome) LIKE :search)"
+                    : " AND LOWER(c.nome) LIKE :search";
+        }
+        var q = em.createQuery(jpql, Long.class);
+        if (!isAdmin) q.setParameter("user", user);
+        if (search != null && !search.trim().isEmpty()) q.setParameter("search", "%" + search.toLowerCase() + "%");
+        return q.getSingleResult();
+    }
+
+    public List<ClienteEntity> findAllClients(String search) {
+        String jpql = "SELECT c FROM ClienteEntity c WHERE 1=1";
+        if (search != null && !search.trim().isEmpty()) {
+            jpql += " AND (LOWER(c.nome) LIKE :search OR LOWER(c.users.username) LIKE :search OR LOWER(c.users.primeiroNome) LIKE :search)";
+        }
+        jpql += " ORDER BY c.nome ASC"; // Ordenação Alfabética!
+
+        var q = em.createQuery(jpql, ClienteEntity.class);
+        if (search != null && !search.trim().isEmpty()) q.setParameter("search", "%" + search.toLowerCase() + "%");
+        return q.getResultList();
     }
 
     public List<ClienteEntity> findAllByUser(UserEntity user) {

@@ -46,23 +46,17 @@ public class LeadDao extends DefaultDao<LeadEntity> implements Serializable {
         merge(leadAtual);
     }
 
-    // Novo método para filtrar diretamente na base de dados
-    public List<LeadEntity> findFilteredLeads(UserEntity user, Integer estado) {
-
+    public List<LeadEntity> findFilteredLeads(UserEntity user, Integer estado, String search) {
         StringBuilder queryStr = new StringBuilder("SELECT l FROM LeadEntity l WHERE l.users = :user AND l.isAtivo = true");
+        if (estado != null) queryStr.append(" AND l.estado = :estado");
+        if (search != null && !search.trim().isEmpty()) queryStr.append(" AND LOWER(l.titulo) LIKE :search");
 
-        // Se o frontend enviar um estado, adicionamos a clausula WHERE
-        if (estado != null) {
-            queryStr.append(" AND l.estado = :estado");
-        }
+        queryStr.append(" ORDER BY l.titulo ASC"); // Ordenação Alfabética!
 
         var query = em.createQuery(queryStr.toString(), LeadEntity.class);
         query.setParameter("user", user);
-
-        if (estado != null) {
-            query.setParameter("estado", estado);
-        }
-
+        if (estado != null) query.setParameter("estado", estado);
+        if (search != null && !search.trim().isEmpty()) query.setParameter("search", "%" + search.toLowerCase() + "%");
         return query.getResultList();
     }
 
@@ -80,26 +74,61 @@ public class LeadDao extends DefaultDao<LeadEntity> implements Serializable {
 
     // ========= ADMIN =========//
 
-    // Novo método para o Admin ver a lista global (com ou sem filtro)
-    public List<LeadEntity> findAllFilteredLeadsGlobal(Integer estado) {
-        StringBuilder queryStr = new StringBuilder("SELECT l FROM LeadEntity l");
-
-        if (estado != null) {
-            queryStr.append(" WHERE l.estado = :estado");
+    public List<LeadEntity> findAllFilteredLeadsGlobal(Integer estado, String search) {
+        StringBuilder queryStr = new StringBuilder("SELECT l FROM LeadEntity l WHERE 1=1");
+        if (estado != null) queryStr.append(" AND l.estado = :estado");
+        if (search != null && !search.trim().isEmpty()) {
+            queryStr.append(" AND (LOWER(l.titulo) LIKE :search OR LOWER(l.users.username) LIKE :search OR LOWER(l.users.primeiroNome) LIKE :search)");
         }
+
+        queryStr.append(" ORDER BY l.titulo ASC"); // Ordenação Alfabética!
 
         var query = em.createQuery(queryStr.toString(), LeadEntity.class);
-
-        if (estado != null) {
-            query.setParameter("estado", estado);
-        }
-
+        if (estado != null) query.setParameter("estado", estado);
+        if (search != null && !search.trim().isEmpty()) query.setParameter("search", "%" + search.toLowerCase() + "%");
         return query.getResultList();
     }
 
     public List<LeadEntity> findAllLeads() {
         return em.createQuery("select l from LeadEntity l", LeadEntity.class)
                 .getResultList();
+    }
+
+    public List<LeadEntity> findFilteredLeadsPaginated(UserEntity user, Integer estado, String search, int page, int pageSize) {
+        boolean isAdmin = user.isAdmin();
+        StringBuilder queryStr = new StringBuilder(isAdmin ? "SELECT l FROM LeadEntity l WHERE 1=1"
+                : "SELECT l FROM LeadEntity l WHERE l.users = :user AND l.isAtivo = true");
+        if (estado != null) queryStr.append(" AND l.estado = :estado");
+        if (search != null && !search.trim().isEmpty()) {
+            queryStr.append(isAdmin ? " AND (LOWER(l.titulo) LIKE :search OR LOWER(l.users.username) LIKE :search OR LOWER(l.users.primeiroNome) LIKE :search)"
+                    : " AND LOWER(l.titulo) LIKE :search");
+        }
+        queryStr.append(" ORDER BY l.titulo ASC");
+        var query = em.createQuery(queryStr.toString(), LeadEntity.class);
+        if (!isAdmin) query.setParameter("user", user);
+        if (estado != null) query.setParameter("estado", estado);
+        if (search != null && !search.trim().isEmpty()) query.setParameter("search", "%" + search.toLowerCase() + "%");
+
+        query.setFirstResult((page - 1) * pageSize);
+        query.setMaxResults(pageSize);
+        return query.getResultList();
+    }
+
+    public long countFilteredLeads(UserEntity user, Integer estado, String search) {
+        boolean isAdmin = user.isAdmin();
+        StringBuilder queryStr = new StringBuilder(isAdmin ? "SELECT COUNT(l) FROM LeadEntity l WHERE 1=1"
+                : "SELECT COUNT(l) FROM LeadEntity l WHERE l.users = :user AND l.isAtivo = true");
+        if (estado != null) queryStr.append(" AND l.estado = :estado");
+        if (search != null && !search.trim().isEmpty()) {
+            queryStr.append(isAdmin ? " AND (LOWER(l.titulo) LIKE :search OR LOWER(l.users.username) LIKE :search OR LOWER(l.users.primeiroNome) LIKE :search)"
+                    : " AND LOWER(l.titulo) LIKE :search");
+        }
+        var query = em.createQuery(queryStr.toString(), Long.class);
+        if (!isAdmin) query.setParameter("user", user);
+        if (estado != null) query.setParameter("estado", estado);
+        if (search != null && !search.trim().isEmpty()) query.setParameter("search", "%" + search.toLowerCase() + "%");
+
+        return query.getSingleResult();
     }
 
     // Este método serve tanto para o Admin "espreitar" um user,

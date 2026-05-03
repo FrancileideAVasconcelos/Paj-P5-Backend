@@ -29,17 +29,19 @@ public class UserBean implements Serializable {
 
 
     public String loginToken(String username, String password) {
-
         UserEntity u = userDao.getLogin(username, password);
 
-        if (u == null) return null;
+        if (u == null) return null; // Credenciais erradas
+
+        //Se a password está certa mas a conta não foi confirmada
+        if (!u.isAtivo()) {
+            throw new SecurityException("A sua conta ainda não foi confirmada. Verifique o seu e-mail.");
+        }
 
         // 1. Gera o token limpo (para devolver no REST)
         String tokenLimpo = TokenBean.generateToken();
-
         tokenDao.guardarTokenDB(tokenLimpo, u);
-
-        return tokenLimpo; // Retorna a versão não encriptada para o Frontend/Postman
+        return tokenLimpo;
     }
 
     // Adiciona este método:
@@ -151,6 +153,7 @@ public class UserBean implements Serializable {
         dto.setFotoUrl(e.getFotoUrl());
         dto.setAdmin(e.isAdmin());
         dto.setAtivo(e.isAtivo());
+        dto.setIdioma(e.getIdioma());
 
         return dto;
     }

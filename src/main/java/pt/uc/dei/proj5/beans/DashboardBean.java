@@ -36,12 +36,12 @@ public class DashboardBean {
             // VISÃO DE ADMINISTRADOR (Global)
             // ==========================================
             List<LeadEntity> allLeads = leadDao.findAllLeads();
-            List<ClienteEntity> allClients = clienteDao.findAllClients();
+            long totalClients = clienteDao.countAllClients();
             List<UserEntity> allUsers = userDao.findAllUsers();
 
             // 1. Estatísticas Totais
             dto.setTotalLeads(allLeads != null ? allLeads.size() : 0);
-            dto.setTotalClients(allClients != null ? allClients.size() : 0);
+            dto.setTotalClients(totalClients);
             dto.setTotalUsers(allUsers != null ? allUsers.size() : 0);
 
             // 2. Contas Confirmadas (Ativas)
@@ -54,11 +54,20 @@ public class DashboardBean {
                 for (LeadEntity l : allLeads) leadsDto.add(leadBean.converterParaDto(l));
                 dto.setLeads(leadsDto); // Para o Gráfico Circular de Estados
 
-                // Gráfico: Leads por Utilizador
-                Map<String, Long> leadsPorUser = allLeads.stream()
+                // Gráfico: Leads por Utilizador (APENAS O TOP 5 - Filtrado e Ordenado no Backend!)
+                Map<String, Long> top5LeadsPorUser = allLeads.stream()
                         .filter(l -> l.getUser() != null)
-                        .collect(Collectors.groupingBy(l -> l.getUser().getUsername(), Collectors.counting()));
-                dto.setLeadsPorUtilizador(leadsPorUser);
+                        .collect(Collectors.groupingBy(l -> l.getUser().getUsername(), Collectors.counting()))
+                        .entrySet().stream()
+                        .sorted(Map.Entry.<String, Long>comparingByValue().reversed()) // Ordena do maior para o menor
+                        .limit(5) // Corta logo aqui no servidor!
+                        .collect(Collectors.toMap(
+                                Map.Entry::getKey,
+                                Map.Entry::getValue,
+                                (e1, e2) -> e1,
+                                java.util.LinkedHashMap::new // O LinkedHashMap é obrigatório para o Java não baralhar a ordem ao gerar o JSON
+                        ));
+                dto.setLeadsPorUtilizador(top5LeadsPorUser);
 
                 // Gráfico: Evolução Temporal de Leads
                 Map<String, Long> evolucaoL = allLeads.stream()
@@ -88,10 +97,9 @@ public class DashboardBean {
             // VISÃO DE UTILIZADOR COMUM
             // ==========================================
             List<LeadEntity> myLeads = leadDao.findAllByUser(user);
-            List<ClienteEntity> myClients = clienteDao.findAllActiveByUser(user);
-
+            long totalClients = clienteDao.countAllActiveByUser(user);
             dto.setTotalLeads(myLeads != null ? myLeads.size() : 0);
-            dto.setTotalClients(myClients != null ? myClients.size() : 0);
+            dto.setTotalClients(totalClients);
 
             if (myLeads != null) {
                 List<LeadDto> leadsDto = new ArrayList<>();

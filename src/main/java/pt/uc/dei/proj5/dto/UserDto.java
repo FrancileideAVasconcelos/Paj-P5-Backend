@@ -37,6 +37,7 @@ public class UserDto {
 
     private boolean admin;
     private boolean ativo;
+    private String idioma;
 
     // Adiciona esta variável
     private long unreadCount;
@@ -119,6 +120,14 @@ public class UserDto {
     }
     public void setAtivo(boolean ativo) {
         this.ativo = ativo;
+    }
+
+    @XmlElement
+    public String getIdioma() {
+        return idioma;
+    }
+    public void setIdioma(String idioma) {
+        this.idioma = idioma;
     }
 
     @XmlElement

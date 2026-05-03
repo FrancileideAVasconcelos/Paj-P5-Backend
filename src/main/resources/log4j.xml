@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="WARN">
     <Appenders>
-        <!-- 1. Mostrar os logs na Consola (útil para ti enquanto programas) -->
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} [%t] %-5level %logger{36} - %msg%n"/>
         </Console>
 
-        <!-- 2. Guardar os logs de Auditoria num ficheiro rotativo (cria um novo ficheiro se ficar muito grande) -->
-        <RollingFile name="AuditFile" fileName="logs/auditoria.log"
-                     filePattern="logs/auditoria-%d{yyyy-MM-dd}-%i.log">
-            <!-- O formato: Data/Hora | Nível | Classe | Mensagem -->
+        <!-- Adicionámos append="true" por segurança e mudámos o caminho para a pasta do WildFly -->
+        <RollingFile name="AuditFile"
+                     fileName="${sys:jboss.server.log.dir}/auditoria-crm.log"
+                     filePattern="${sys:jboss.server.log.dir}/auditoria-crm-%d{yyyy-MM-dd}-%i.log"
+                     append="true">
             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} | %-5level | %msg%n"/>
             <Policies>
                 <TimeBasedTriggeringPolicy />
@@ -20,7 +20,6 @@
     </Appenders>
 
     <Loggers>
-        <!-- Configura a nossa app para usar os dois Appenders -->
         <Root level="info">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="AuditFile"/>

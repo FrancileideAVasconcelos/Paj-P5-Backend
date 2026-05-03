@@ -10,6 +10,7 @@ import jakarta.ws.rs.core.Response;
 import pt.uc.dei.proj5.beans.AdminBean;
 import pt.uc.dei.proj5.dto.LeadDto;
 import pt.uc.dei.proj5.dto.ClientDto;
+import pt.uc.dei.proj5.dto.PaginatedResponseDto;
 import pt.uc.dei.proj5.dto.UserDto;
 import pt.uc.dei.proj5.entity.UserEntity;
 import pt.uc.dei.proj5.utils.AppConstants;
@@ -61,11 +62,16 @@ public class AdminService extends BaseService {
 
     @GET
     @Path("/users")
-    // Adicionamos o @QueryParam("search")
-    public Response getAllUsers(@HeaderParam("token") String token, @QueryParam("search") String search) {
+    // Adicionámos o limit e o page com valores por defeito
+    public Response getAllUsers(@HeaderParam("token") String token,
+                                @QueryParam("search") String search,
+                                @QueryParam("page") @DefaultValue("1") int page,
+                                @QueryParam("limit") @DefaultValue("10") int limit) {
         validarAdmin(token);
-        List<UserDto> users = adminBean.getAllUsers(search);
-        return Response.status(Response.Status.OK).entity(users).build();
+
+        PaginatedResponseDto<UserDto> response = adminBean.getAllUsers(search, page, limit);
+
+        return Response.status(Response.Status.OK).entity(response).build();
     }
 
     @PATCH

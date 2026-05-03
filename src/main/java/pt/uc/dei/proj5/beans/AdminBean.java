@@ -10,6 +10,7 @@ import pt.uc.dei.proj5.dao.UserDao;
 import pt.uc.dei.proj5.dao.VerificationTokenDao;
 import pt.uc.dei.proj5.dto.ClientDto;
 import pt.uc.dei.proj5.dto.LeadDto;
+import pt.uc.dei.proj5.dto.PaginatedResponseDto;
 import pt.uc.dei.proj5.entity.ClienteEntity;
 import pt.uc.dei.proj5.dto.UserDto;
 import pt.uc.dei.proj5.entity.LeadEntity;
@@ -85,14 +86,20 @@ public class AdminBean implements Serializable {
         emailBean.sendEmail(email, subject, body);
     }
 
-    // Passamos a receber a string de pesquisa
-    public List<UserDto> getAllUsers(String search) {
-        List<UserEntity> users = userDao.findFilteredUsers(search); // Chama o novo método!
+    public PaginatedResponseDto<UserDto> getAllUsers(String search, int page, int pageSize) {
+        // 1. Conta o total
+        long total = userDao.countFilteredUsers(search);
+
+        // 2. Vai buscar a página específica
+        List<UserEntity> users = userDao.findFilteredUsers(search, page, pageSize);
+
         List<UserDto> dtos = new ArrayList<>();
         for (UserEntity u : users) {
             dtos.add(userBean.converterParaDto(u));
         }
-        return dtos;
+
+        // 3. Devolve o "envelope"
+        return new PaginatedResponseDto<>(dtos, total, page, pageSize);
     }
 
     public UserDto getProfileUser(String usernameAlvo){

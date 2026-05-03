@@ -9,6 +9,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import pt.uc.dei.proj5.beans.LeadBean;
 import pt.uc.dei.proj5.dto.LeadDto;
+import pt.uc.dei.proj5.dto.PaginatedResponseDto;
 import pt.uc.dei.proj5.entity.UserEntity;
 import pt.uc.dei.proj5.utils.AppConstants;
 
@@ -41,17 +42,14 @@ public class LeadService extends BaseService {
     }
 
     @GET
-    public Response getLeads(@HeaderParam("token") String token, @QueryParam("estado") Integer estado) {
-
+    public Response getLeads(@HeaderParam("token") String token,
+                             @QueryParam("estado") Integer estado,
+                             @QueryParam("search") String search,
+                             @QueryParam("page") @DefaultValue("1") int page,
+                             @QueryParam("limit") @DefaultValue("5") int limit) {
         UserEntity user = validarAcesso(token);
-
-        // Alteramos para chamar um novo método no Bean que aceita os filtros
-        List<LeadDto> leads = leadBean.getFilteredLeads(user, estado);
-
-        if (leads == null) {
-            leads = new ArrayList<>();
-        }
-        return Response.status(Response.Status.OK).entity(leads).build();
+        PaginatedResponseDto<LeadDto> response = leadBean.getFilteredLeads(user, estado, search, page, limit);
+        return Response.status(Response.Status.OK).entity(response).build();
     }
 
     @GET

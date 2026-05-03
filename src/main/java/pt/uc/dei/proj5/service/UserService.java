@@ -42,17 +42,23 @@ public class UserService extends BaseService {
             return Response.status(401).entity("Dados incompletos!").build();
         }
 
-        String token = userBean.loginToken(user.getUsername(), user.getPassword());
+        try {
+            String token = userBean.loginToken(user.getUsername(), user.getPassword());
 
-        if (token != null) {
-            logger.info("Utilizador: {} | Ação: Fez login com sucesso no sistema.",
-                    user.getUsername());
-            return Response.status(200).entity(Collections.singletonMap("token", token)).build();
+            if (token != null) {
+                logger.info("Utilizador: {} | Ação: Fez login com sucesso no sistema.", user.getUsername());
+                return Response.status(200).entity(Collections.singletonMap("token", token)).build();
+            }
+
+            // Se devolver null (Password ou Username errados)
+            logger.warn("Utilizador: {} | Ação: Falhou a autenticação (Credenciais inválidas).", user.getUsername());
+            return Response.status(401).entity(AppConstants.CREDENCIAIS_INVALIDAS).build();
+
+        } catch (SecurityException e) {
+            // A MAGIA DO ERRO 403 FICA AQUI!
+            logger.warn("Utilizador: {} | Ação: Tentativa de login em conta inativa/não confirmada.", user.getUsername());
+            return Response.status(403).entity(e.getMessage()).build();
         }
-
-        logger.warn("Utilizador: {} | Ação: Falhou a autenticação (Password incorreta ou conta inativa).",
-                user.getUsername());
-        return Response.status(401).entity(AppConstants.CREDENCIAIS_INVALIDAS).build();
     }
 
     @POST
@@ -131,6 +137,19 @@ public class UserService extends BaseService {
         UserDto user = userBean.converterParaDto(userEntity);
 
         return Response.status(Response.Status.OK).entity(user).build();
+    }
+
+    @PATCH
+    @Path("/idioma")
+    public Response updateIdioma(@HeaderParam("token") String token, UserDto dto) {
+        UserEntity user = validarAcesso(token);
+
+        if (dto.getIdioma() != null) {
+            user.setIdioma(dto.getIdioma());
+            userDao.merge(user); // Grava a nova preferência na BD
+        }
+
+        return Response.status(Response.Status.OK).build();
     }
 
     @PATCH

@@ -61,6 +61,10 @@ public class UserEntity implements Serializable {
     private boolean isAtivo;
 
 
+    @Column(name = "idioma", nullable = false)
+    private String idioma = "pt";
+
+
 
     @OneToMany(mappedBy = "users")
     private List<TokenEntity> tokens;
@@ -119,6 +123,10 @@ public class UserEntity implements Serializable {
         return isAtivo;
     }
 
+    public String getIdioma() {
+        return idioma;
+    }
+
     @CreationTimestamp
     @Column(name = "dataCriacao", nullable = false, updatable = false)
     private LocalDate dataCriacao;
@@ -166,6 +174,10 @@ public class UserEntity implements Serializable {
 
     public void setIsAtivo(boolean ativo) {
         this.isAtivo = ativo;
+    }
+
+    public void setIdioma(String idioma) {
+        this.idioma = idioma;
     }
 
     public LocalDate getDataCriacao() { return dataCriacao; }

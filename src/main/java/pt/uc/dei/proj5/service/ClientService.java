@@ -9,6 +9,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import pt.uc.dei.proj5.beans.ClientBean;
 import pt.uc.dei.proj5.dto.ClientDto;
+import pt.uc.dei.proj5.dto.PaginatedResponseDto;
 import pt.uc.dei.proj5.entity.UserEntity;
 import pt.uc.dei.proj5.utils.AppConstants;
 
@@ -39,11 +40,13 @@ public class ClientService extends BaseService {
     }
 
     @GET
-    public Response getClientes(@HeaderParam("token") String token) {
+    public Response getClientes(@HeaderParam("token") String token,
+                                @QueryParam("search") String search,
+                                @QueryParam("page") @DefaultValue("1") int page,
+                                @QueryParam("limit") @DefaultValue("5") int limit) {
         UserEntity user = validarAcesso(token);
-
-        List<ClientDto> clientes = clientBean.listClients(user);
-        return Response.status(Response.Status.OK).entity(clientes).build(); // 200
+        PaginatedResponseDto<ClientDto> response = clientBean.listClients(user, search, page, limit);
+        return Response.status(Response.Status.OK).entity(response).build();
     }
 
     @GET

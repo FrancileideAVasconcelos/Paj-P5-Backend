@@ -6,6 +6,7 @@ import jakarta.inject.Inject;
 import pt.uc.dei.proj5.dao.ClienteDao;
 import pt.uc.dei.proj5.dao.UserDao;
 import pt.uc.dei.proj5.dto.ClientDto;
+import pt.uc.dei.proj5.dto.PaginatedResponseDto;
 import pt.uc.dei.proj5.entity.ClienteEntity;
 import pt.uc.dei.proj5.entity.UserEntity;
 
@@ -68,24 +69,17 @@ public class ClientBean implements Serializable {
         clienteDao.atualizaCliente(clienteAtual, dtoNovo);
     }
 
-    public List<ClientDto> listClients(UserEntity user) {
+    public PaginatedResponseDto<ClientDto> listClients(UserEntity user, String search, int page, int limit) {
+        if (user == null) return new PaginatedResponseDto<>(new ArrayList<>(), 0, page, limit);
 
-        if (user == null) return new ArrayList<>();
-
-        List<ClienteEntity> entidades;
-
-        // A MAGIA: Se for admin, vai buscar TODOS. Se não, vai buscar só os dele.
-        if (user.isAdmin()) {
-            entidades = clienteDao.findAllClients();
-        } else {
-            entidades = clienteDao.findAllActiveByUser(user);
-        }
+        long total = clienteDao.countFilteredClients(user, search);
+        List<ClienteEntity> entidades = clienteDao.findFilteredClientsPaginated(user, search, page, limit);
 
         List<ClientDto> myClients = new ArrayList<>();
         for(ClienteEntity e : entidades){
             myClients.add(converForDto(e));
         }
-        return myClients;
+        return new PaginatedResponseDto<>(myClients, total, page, limit);
     }
 
     public int softDeleteClient(Long id, String usernameRequester) {

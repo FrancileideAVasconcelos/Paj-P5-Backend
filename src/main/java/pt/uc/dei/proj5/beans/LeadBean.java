@@ -6,6 +6,7 @@ import jakarta.inject.Inject;
 import pt.uc.dei.proj5.dao.LeadDao;
 import pt.uc.dei.proj5.dao.UserDao;
 import pt.uc.dei.proj5.dto.LeadDto;
+import pt.uc.dei.proj5.dto.PaginatedResponseDto;
 import pt.uc.dei.proj5.entity.LeadEntity;
 import pt.uc.dei.proj5.entity.UserEntity;
 import java.io.Serializable;
@@ -65,16 +66,9 @@ public class LeadBean implements Serializable {
         return converterParaDto(lead);
     }
 
-    // lista filtrada por estado
-    public List<LeadDto> getFilteredLeads(UserEntity user, Integer estado){
-        List<LeadEntity> leads;
-
-        // A MAGIA PARA AS LEADS:
-        if (user.isAdmin()) {
-            leads = leadDao.findAllFilteredLeadsGlobal(estado);
-        } else {
-            leads = leadDao.findFilteredLeads(user, estado);
-        }
+    public PaginatedResponseDto<LeadDto> getFilteredLeads(UserEntity user, Integer estado, String search, int page, int limit){
+        long total = leadDao.countFilteredLeads(user, estado, search);
+        List<LeadEntity> leads = leadDao.findFilteredLeadsPaginated(user, estado, search, page, limit);
 
         List<LeadDto> dtoLeads = new ArrayList<>();
         if (leads != null) {
@@ -82,7 +76,7 @@ public class LeadBean implements Serializable {
                 dtoLeads.add(converterParaDto(l));
             }
         }
-        return dtoLeads;
+        return new PaginatedResponseDto<>(dtoLeads, total, page, limit);
     }
 
     // Editar Lead
