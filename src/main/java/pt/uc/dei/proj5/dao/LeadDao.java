@@ -46,20 +46,6 @@ public class LeadDao extends DefaultDao<LeadEntity> implements Serializable {
         merge(leadAtual);
     }
 
-    public List<LeadEntity> findFilteredLeads(UserEntity user, Integer estado, String search) {
-        StringBuilder queryStr = new StringBuilder("SELECT l FROM LeadEntity l WHERE l.users = :user AND l.isAtivo = true");
-        if (estado != null) queryStr.append(" AND l.estado = :estado");
-        if (search != null && !search.trim().isEmpty()) queryStr.append(" AND LOWER(l.titulo) LIKE :search");
-
-        queryStr.append(" ORDER BY l.titulo ASC"); // Ordenação Alfabética!
-
-        var query = em.createQuery(queryStr.toString(), LeadEntity.class);
-        query.setParameter("user", user);
-        if (estado != null) query.setParameter("estado", estado);
-        if (search != null && !search.trim().isEmpty()) query.setParameter("search", "%" + search.toLowerCase() + "%");
-        return query.getResultList();
-    }
-
     public LeadEntity findLeadById(Long id) {
         return em.find(LeadEntity.class, id);
     }
@@ -74,24 +60,40 @@ public class LeadDao extends DefaultDao<LeadEntity> implements Serializable {
 
     // ========= ADMIN =========//
 
-    public List<LeadEntity> findAllFilteredLeadsGlobal(Integer estado, String search) {
-        StringBuilder queryStr = new StringBuilder("SELECT l FROM LeadEntity l WHERE 1=1");
-        if (estado != null) queryStr.append(" AND l.estado = :estado");
-        if (search != null && !search.trim().isEmpty()) {
-            queryStr.append(" AND (LOWER(l.titulo) LIKE :search OR LOWER(l.users.username) LIKE :search OR LOWER(l.users.primeiroNome) LIKE :search)");
+    // Conta os totais rapidamente
+    public long countAllLeads(UserEntity user) {
+        if (user.isAdmin()) {
+            return em.createQuery("SELECT COUNT(l) FROM LeadEntity l", Long.class).getSingleResult();
+        } else {
+            return em.createQuery("SELECT COUNT(l) FROM LeadEntity l WHERE l.users = :user", Long.class)
+                    .setParameter("user", user).getSingleResult();
         }
-
-        queryStr.append(" ORDER BY l.titulo ASC"); // Ordenação Alfabética!
-
-        var query = em.createQuery(queryStr.toString(), LeadEntity.class);
-        if (estado != null) query.setParameter("estado", estado);
-        if (search != null && !search.trim().isEmpty()) query.setParameter("search", "%" + search.toLowerCase() + "%");
-        return query.getResultList();
     }
 
-    public List<LeadEntity> findAllLeads() {
-        return em.createQuery("select l from LeadEntity l", LeadEntity.class)
+    // Agrupa as leads por estado diretamente na BD
+    public List<Object[]> countLeadsByEstado(UserEntity user) {
+        if (user.isAdmin()) {
+            return em.createQuery("SELECT l.estado, COUNT(l) FROM LeadEntity l GROUP BY l.estado", Object[].class).getResultList();
+        } else {
+            return em.createQuery("SELECT l.estado, COUNT(l) FROM LeadEntity l WHERE l.users = :user GROUP BY l.estado", Object[].class)
+                    .setParameter("user", user).getResultList();
+        }
+    }
+
+    public List<Object[]> countTop5LeadsByUser() {
+        return em.createQuery("SELECT l.users.username, COUNT(l) as c FROM LeadEntity l WHERE l.users IS NOT NULL GROUP BY l.users.username ORDER BY c DESC", Object[].class)
+                .setMaxResults(5)
                 .getResultList();
+    }
+
+    // Traz APENAS as datas para fazer o gráfico de evolução (MUITO mais leve que trazer a Lead toda)
+    public List<java.time.LocalDate> findAllLeadDates(UserEntity user) {
+        if (user.isAdmin()) {
+            return em.createQuery("SELECT l.dataCriacao FROM LeadEntity l WHERE l.dataCriacao IS NOT NULL", java.time.LocalDate.class).getResultList();
+        } else {
+            return em.createQuery("SELECT l.dataCriacao FROM LeadEntity l WHERE l.users = :user AND l.dataCriacao IS NOT NULL", java.time.LocalDate.class)
+                    .setParameter("user", user).getResultList();
+        }
     }
 
     public List<LeadEntity> findFilteredLeadsPaginated(UserEntity user, Integer estado, String search, int page, int pageSize) {

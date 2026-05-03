@@ -19,10 +19,11 @@
         </RollingFile>
     </Appenders>
 
-    <Loggers>
-        <Root level="info">
-            <AppenderRef ref="Console"/>
-            <AppenderRef ref="AuditFile"/>
-        </Root>
-    </Loggers>
+    <logger category="pt.uc.dei.proj5">
+        <level name="INFO"/>
+        <handlers>
+            <handler name="AUDIT_FILE"/>
+            <handler name="CONSOLE"/>
+        </handlers>
+    </logger>
 </Configuration>

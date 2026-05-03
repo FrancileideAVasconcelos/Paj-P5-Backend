@@ -3,7 +3,6 @@ package pt.uc.dei.proj5.dao;
 import jakarta.ejb.Stateless;
 import jakarta.persistence.NoResultException;
 import pt.uc.dei.proj5.dto.UserDto;
-import pt.uc.dei.proj5.entity.LeadEntity;
 import pt.uc.dei.proj5.entity.UserEntity;
 import java.io.Serializable;
 import java.util.List;
@@ -36,10 +35,6 @@ public class    UserDao extends DefaultDao<UserEntity> implements Serializable {
         } catch (NoResultException e) {
             return null;
         }
-    }
-
-    public List<UserEntity> findAllUsers() {
-        return em.createQuery("SELECT u FROM UserEntity u", UserEntity.class).getResultList();
     }
 
     // Vai buscar os utilizadores, permitindo pesquisa por username ou email e já ordenando
@@ -86,6 +81,17 @@ public class    UserDao extends DefaultDao<UserEntity> implements Serializable {
         return query.getSingleResult();
     }
 
+    public long countTotalUsers() {
+        return em.createQuery("SELECT COUNT(u) FROM UserEntity u", Long.class).getSingleResult();
+    }
+
+    public long countActiveUsers() {
+        return em.createQuery("SELECT COUNT(u) FROM UserEntity u WHERE u.isAtivo = true", Long.class).getSingleResult();
+    }
+
+    public List<java.time.LocalDate> findAllUserCreationDates() {
+        return em.createQuery("SELECT u.dataCriacao FROM UserEntity u WHERE u.dataCriacao IS NOT NULL", java.time.LocalDate.class).getResultList();
+    }
 
     public void novoUserDB(UserDto novoUser) {
 

@@ -1,7 +1,6 @@
 package pt.uc.dei.proj5.dto;
 
 import java.io.Serializable;
-import java.util.List;
 import java.util.Map;
 
 public class DashboardDto implements Serializable {
@@ -10,12 +9,13 @@ public class DashboardDto implements Serializable {
 
     private long totalLeads;
     private long totalClients;
-    private List<LeadDto> leads;
+    private Map<Integer, Long> leadsPorEstado;
     private long totalUsers;
     private long contasConfirmadas;
-    private java.util.Map<String, Long> leadsPorUtilizador;
-    private java.util.Map<String, Long> evolucaoUtilizadores;
-    private java.util.Map<String, Long> evolucaoLeads;
+    private Map<String, Long> leadsPorUtilizador;
+    private Map<String, Long> evolucaoUtilizadores;
+    private Map<String, Long> evolucaoLeads;
+
 
     // Construtor vazio
     public DashboardDto() {}
@@ -37,12 +37,12 @@ public class DashboardDto implements Serializable {
         this.totalClients = totalClients;
     }
 
-    public List<LeadDto> getLeads() {
-        return leads;
+    public Map<Integer,Long> getLeadsPorEstado() {
+        return leadsPorEstado;
     }
 
-    public void setLeads(List<LeadDto> leads) {
-        this.leads = leads;
+    public void setLeadsPorEstado(Map<Integer, Long> leadsPorEstado) {
+        this.leadsPorEstado = leadsPorEstado;
     }
 
     public long getTotalUsers() {

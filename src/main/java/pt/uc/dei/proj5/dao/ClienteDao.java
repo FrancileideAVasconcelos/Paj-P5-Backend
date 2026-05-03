@@ -49,20 +49,6 @@ public class ClienteDao extends DefaultDao<ClienteEntity> implements Serializabl
         return em.find(ClienteEntity.class, id);
     }
 
-    // Para o Utilizador Normal (Procura apenas nos seus clientes)
-    public List<ClienteEntity> findAllActiveByUser(UserEntity user, String search) {
-        String jpql = "SELECT c FROM ClienteEntity c WHERE c.users = :user AND c.isAtivo = true";
-        if (search != null && !search.trim().isEmpty()) {
-            jpql += " AND LOWER(c.nome) LIKE :search";
-        }
-        jpql += " ORDER BY c.nome ASC"; // Ordenação Alfabética!
-
-        var q = em.createQuery(jpql, ClienteEntity.class);
-        q.setParameter("user", user);
-        if (search != null && !search.trim().isEmpty()) q.setParameter("search", "%" + search.toLowerCase() + "%");
-        return q.getResultList();
-    }
-
     public boolean existsByNomeAndEmpresa(String nome, String empresa) {
         Long count = em.createQuery(
                         "SELECT COUNT(c) FROM ClienteEntity c WHERE LOWER(c.nome) = LOWER(:nome) AND LOWER(c.empresa) = LOWER(:empresa) AND c.isAtivo = true", Long.class)
@@ -135,18 +121,6 @@ public class ClienteDao extends DefaultDao<ClienteEntity> implements Serializabl
         if (!isAdmin) q.setParameter("user", user);
         if (search != null && !search.trim().isEmpty()) q.setParameter("search", "%" + search.toLowerCase() + "%");
         return q.getSingleResult();
-    }
-
-    public List<ClienteEntity> findAllClients(String search) {
-        String jpql = "SELECT c FROM ClienteEntity c WHERE 1=1";
-        if (search != null && !search.trim().isEmpty()) {
-            jpql += " AND (LOWER(c.nome) LIKE :search OR LOWER(c.users.username) LIKE :search OR LOWER(c.users.primeiroNome) LIKE :search)";
-        }
-        jpql += " ORDER BY c.nome ASC"; // Ordenação Alfabética!
-
-        var q = em.createQuery(jpql, ClienteEntity.class);
-        if (search != null && !search.trim().isEmpty()) q.setParameter("search", "%" + search.toLowerCase() + "%");
-        return q.getResultList();
     }
 
     public List<ClienteEntity> findAllByUser(UserEntity user) {
